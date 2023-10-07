@@ -1,8 +1,6 @@
 #include <iostream>
 #include <string>
-#include <vector>
 #include <cstring>
-#include <cstdlib>
 #include <algorithm>
 #include <queue>
 #include <cstdint>
@@ -50,6 +48,97 @@ struct PositionNode { //使用启发式评估对搜索落子顺序进行调整�
 	}
 };
 
+enum ChessboardLineType {
+	LINE, // 行
+	ROW, // 列
+	ULLRDiagonal, // 左上右下对角线 Upper Left - Lower Right
+	LLURDiagonal // 左下右上对角线 Lower Left - Upper Right
+};
+
+class ChessboardLine {
+	ChessboardLineType type;
+	int x, y; // 棋盘中第一优先靠左、第二优先靠上元素的横纵坐标
+public:
+	ChessboardLine(ChessboardLineType type, int x, int y): type(type) {
+		switch (type) {
+			case LINE: {
+				this->x = x;
+				this->y = 0;
+				break;
+			}
+			case ROW: {
+				this->x = 0;
+				this->y = y;
+				break;
+			}
+			case ULLRDiagonal: {
+				int shift = min(x, y);
+				this->x = x - shift;
+				this->y = y - shift;
+				break;
+			}
+			case LLURDiagonal: {
+				int shift = min(SIZE - x, y);
+				this->x = x + shift;
+				this->y = y - shift;
+				break;
+			}
+		}
+	}
+	int size() const {
+		switch (type) {
+			case LINE:
+			case ROW: {
+				return SIZE;
+			}
+			case ULLRDiagonal: {
+				return min(SIZE - x, SIZE - y);
+			}
+			case LLURDiagonal: {
+				if (y == 0)
+					return x + 1;
+				else // x == SIZE
+					return SIZE - y;
+			}
+		}
+		assert(false);
+	}
+	int i(int index) const {
+		switch (type) {
+			case LINE: {
+				return x;
+			}
+			case ROW: {
+				return index;
+			}
+			case ULLRDiagonal: {
+				return x + index;
+			}
+			case LLURDiagonal: {
+				return x - index;
+			}
+		}
+		return NOT_EXIST;
+	}
+	int j(int index) const {
+		switch (type) {
+			case LINE: {
+				return index;
+			}
+			case ROW: {
+				return y;
+			}
+			case ULLRDiagonal: {
+				return y + index;
+			}
+			case LLURDiagonal: {
+				return y + index;
+			}
+		}
+		return NOT_EXIST;
+	}
+};
+
 struct Grid {
 	ChessPiece grid[SIZE][SIZE]; //二维数组模拟棋盘
 	//XShift和YShift数组是程序搜索过程中遍历指定方格的邻接方格的偏移量
@@ -59,9 +148,6 @@ struct Grid {
 	const long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 1000000 };
 	//活棋的评估分数（两头没有被堵住，都可以下棋）
 	const long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 1000000 };
-	//XList和YList数组是程序中使用的临时数组
-	int XList[50];
-	int YList[50];
 
 	//将类型为value的棋子落子在棋盘(x,y)坐标，成功返回true，坐标不存在返回false
 	inline bool placeAt(int x, int y, ChessPiece value) {
@@ -122,44 +208,34 @@ struct Grid {
 			cnt++;
 		return cnt;
 	}
-	//下标不越界的访问数组，当越界时返回NOT_EXIST
-	inline int getElemInArraySafe(int list[], int index, int size) {
-		if (0 <= index && index < size)
-			return list[index];
-		else
-			return NOT_EXIST;
-	}
-	//计算XList（存储x坐标的数组）和YList（存储y坐标的数组）所指定的连成一条线上的棋子的评估分数
-	long long SequenceEvaluate(int XList[], int YList[], int size) {
-		int XSize = size, YSize = size;
+	//计算ChessboardLine line所指定的连成一条线上的棋子的评估分数
+	long long SequenceEvaluate(ChessboardLine &line) {
+		int lineSize = line.size();
 		long long sum = 0;
 		ChessPiece status = EMPTY;
-		int cnt = 0;
-		int leftEdge = -1, rightEdge;
-		for (int i = 0; i < XSize; i++) {
-			ChessPiece curGrid = getValueAt(XList[i], YList[i]);
+		int cnt = 0, leftEdge = -1, rightEdge;
+		for (int i = 0; i < lineSize; i++) {
+			ChessPiece curGrid = getValueAt(line.i(i), line.j(i));
 			if (status == curGrid)
 				cnt++;
 			else {
 				rightEdge = i;
 				sum += getScore(status, cnt,
 					calculateEdgeSituation(
-						getValueAt(getElemInArraySafe(XList, leftEdge, XSize),
-							getElemInArraySafe(YList, leftEdge, YSize)),
-						getValueAt(getElemInArraySafe(XList, rightEdge, XSize),
-							getElemInArraySafe(YList, rightEdge, YSize))));
+						getValueAt(line.i(leftEdge), line.j(leftEdge)),
+						getValueAt(line.i(rightEdge), line.j(rightEdge))
+						));
 				status = curGrid;
 				cnt = 1;
 				leftEdge = i - 1;
 			}
 		}
-		rightEdge = XSize;
+		rightEdge = lineSize;
 		sum += getScore(status, cnt,
 			calculateEdgeSituation(
-				getValueAt(getElemInArraySafe(XList, leftEdge, XSize),
-					getElemInArraySafe(YList, leftEdge, YSize)),
-				getValueAt(getElemInArraySafe(XList, rightEdge, XSize),
-					getElemInArraySafe(YList, rightEdge, YSize))));
+				getValueAt(line.i(leftEdge), line.j(leftEdge)),
+				getValueAt(line.i(rightEdge), line.j(rightEdge))
+				));
 		return sum;
 	}
 	//棋局评估函数
@@ -169,110 +245,65 @@ struct Grid {
 
 		// 评估每一行
 		for (int i = 0; i < SIZE; i++) {
-			ptr = 0;
-			for (int j = 0; j < SIZE; j++) {
-				XList[ptr] = i;
-				YList[ptr] = j;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardLine(LINE, i, 0);
+			sum += SequenceEvaluate(chessboardLine);
 		}
 		// 评估每一列
 		for (int i = 0; i < SIZE; i++) {
-			ptr = 0;
-			for (int j = 0; j < SIZE; j++) {
-				XList[ptr] = j;
-				YList[ptr] = i;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardRow(ROW, 0, i);
+			sum += SequenceEvaluate(chessboardRow);
 		}
 		// 评估每个左上-右下对角线
 
 		// 左侧第0列开始的对角线
 		for (int line = 0; line < SIZE; line++) {
-			ptr = 0;
-			for (int x = line, y = 0; x < SIZE && y < SIZE; x++, y++) {
-				XList[ptr] = x;
-				YList[ptr] = y;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardULLR(ULLRDiagonal, line, 0);
+			sum += SequenceEvaluate(chessboardULLR);
 		}
 
 		// 上侧第0行开始的对角线
 		for (int row = 1; row < SIZE; row++) {
-			ptr = 0;
-			for (int x = 0, y = row; x < SIZE && y < SIZE; x++, y++) {
-				XList[ptr] = x;
-				YList[ptr] = y;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardULLR(ULLRDiagonal, 0, row);
+			sum += SequenceEvaluate(chessboardULLR);
 		}
 		// 评估每个右上-左下对角线
 
 		// 右侧第14列开始的对角线
 		for (int line = 0; line < SIZE; line++) {
-			ptr = 0;
-			for (int x = line, y = SIZE - 1; x < SIZE && y >= 0; x++, y--) {
-				XList[ptr] = x;
-				YList[ptr] = y;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardLLUR(LLURDiagonal, line, SIZE - 1);
+			sum += SequenceEvaluate(chessboardLLUR);
 		}
 
 		// 上侧第0行开始的对角线
 		for (int row = 0; row < SIZE - 1; row++) {
-			ptr = 0;
-			for (int x = 0, y = row; x < SIZE && y >= 0; x++, y--) {
-				XList[ptr] = x;
-				YList[ptr] = y;
-				ptr++;
-			}
-			sum += SequenceEvaluate(XList, YList, ptr);
+			ChessboardLine chessboardLLUR(LLURDiagonal, 0, row);
+			sum += SequenceEvaluate(chessboardLLUR);
 		}
 		return sum;
 	}
 	//评估坐标(x,y)处所对应的分数
 	long long EvaluateUnit(int x, int y) {
 		long long sum = 0;
-		int ptr = 0;
-
-		// 评估行
-		ptr = 0;
-		for (int j = 0; j < SIZE; j++) {
-			XList[ptr] = x;
-			YList[ptr] = j;
-			ptr++;
+		{
+			// 评估行
+			ChessboardLine chessboardLine(LINE, x, 0);
+			sum += SequenceEvaluate(chessboardLine);
 		}
-		sum += SequenceEvaluate(XList, YList, ptr);
-		// 评估列
-		ptr = 0;
-		for (int j = 0; j < SIZE; j++) {
-			XList[ptr] = j;
-			YList[ptr] = y;
-			ptr++;
+		{
+			// 评估列
+			ChessboardLine chessboardRow(ROW, 0, y);
+			sum += SequenceEvaluate(chessboardRow);
 		}
-		sum += SequenceEvaluate(XList, YList, ptr);
-		// 评估左上-右下对角线
-		ptr = 0;
-		for (int i = x - min(x, y), j = y - min(x, y); i < SIZE && j < SIZE; i++, j++) {
-			XList[ptr] = i;
-			YList[ptr] = j;
-			ptr++;
+		{
+			// 评估左上-右下对角线
+			ChessboardLine chessboardULLR(ULLRDiagonal, x, y);
+			sum += SequenceEvaluate(chessboardULLR);
 		}
-		sum += SequenceEvaluate(XList, YList, ptr);
-
-		// 评估右上-左下对角线
-		ptr = 0;
-		for (int i = x + min(SIZE - x, y), j = y - min(SIZE - x, y); i >= 0 && j < SIZE; i--, j++) {
-			XList[ptr] = i;
-			YList[ptr] = j;
-			ptr++;
+		{
+			// 评估右上-左下对角线
+			ChessboardLine chessboardLLUR(LLURDiagonal, x, y);
+			sum += SequenceEvaluate(chessboardLLUR);
 		}
-		sum += SequenceEvaluate(XList, YList, ptr);
 		return sum;
 	}
 	//评估在坐标(x,y)处落子时，对总评估分数会产生的差值，这样可以加快搜索速度
