@@ -10,10 +10,12 @@
 using namespace std;
 
 //二维数组中的数值代表棋盘中摆放的棋子，每种数值代表一种棋子
-const int EMPTY = 0; //该位置为空
-const int BOT = 1; //该位置为机器人的棋子
-const int PLAYER = 2; //该位置为人类的棋子
-const int NOT_EXIST = -1; //该位置不存在（数组越界）
+enum ChessPiece {
+	NOT_EXIST = -1, //该位置不存在（数组越界）
+	EMPTY = 0, //该位置为空
+	BOT, //该位置为机器人的棋子
+	PLAYER //该位置为人类的棋子
+};
 
 const int SIZE = 15; //棋盘边长
 int DEPTH; //极大极小搜索深度
@@ -49,20 +51,20 @@ struct PositionNode { //使用启发式评估对搜索落子顺序进行调整�
 };
 
 struct Grid {
-	int grid[SIZE][SIZE]; //二维数组模拟棋盘
+	ChessPiece grid[SIZE][SIZE]; //二维数组模拟棋盘
 	//XShift和YShift数组是程序搜索过程中遍历指定方格的邻接方格的偏移量
-	int XShift[SHIFT_LENGTH] = { -1, -1, -1, 0, 0, 1, 1, 1 };
-	int YShift[SHIFT_LENGTH] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+	const int XShift[SHIFT_LENGTH] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+	const int YShift[SHIFT_LENGTH] = { -1, 0, 1, -1, 1, -1, 0, 1 };
 	//死棋的评估分数（有一头被堵住，另一头没有被堵住，只有一头可以继续下棋）
-	long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 1000000 }; 
+	const long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 1000000 };
 	//活棋的评估分数（两头没有被堵住，都可以下棋）
-	long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 1000000 };
+	const long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 1000000 };
 	//XList和YList数组是程序中使用的临时数组
 	int XList[50];
 	int YList[50];
 
 	//将类型为value的棋子落子在棋盘(x,y)坐标，成功返回true，坐标不存在返回false
-	inline bool placeAt(int x, int y, int value) {
+	inline bool placeAt(int x, int y, ChessPiece value) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE) {
 			grid[x][y] = value;
 			return true;
@@ -70,16 +72,16 @@ struct Grid {
 		return false;
 	}
 	//获得棋盘上(x,y)坐标位置的棋子类型，若坐标不存在返回NOT_EXIST
-	inline int getValueAt(int x, int y) {
+	inline ChessPiece getValueAt(int x, int y) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE)
 			return grid[x][y];
 		else
 			return NOT_EXIST;
 	}
 	//传入棋子类型status，连续棋子数cnt，两边有几边是空的edgeSituation，获取当前连续棋子的评估分数
-	inline long long getScore(int status, int cnt, int edgeSituation) {
+	inline long long getScore(ChessPiece status, int cnt, int edgeSituation) {
 		//当两边都被堵住时，如果在中间下棋有可能成五，需要返回一个评估值，解决了不堵中间的Bug
-		if (edgeSituation == 0) { 
+		if (edgeSituation == 0) {
 			switch (status) {
 			case BOT:
 				return cnt == 5 ? Score_E2[5] : 0;
@@ -131,10 +133,11 @@ struct Grid {
 	long long SequenceEvaluate(int XList[], int YList[], int size) {
 		int XSize = size, YSize = size;
 		long long sum = 0;
-		int status = EMPTY, cnt = 0;
+		ChessPiece status = EMPTY;
+		int cnt = 0;
 		int leftEdge = -1, rightEdge;
 		for (int i = 0; i < XSize; i++) {
-			int curGrid = getValueAt(XList[i], YList[i]);
+			ChessPiece curGrid = getValueAt(XList[i], YList[i]);
 			if (status == curGrid)
 				cnt++;
 			else {
@@ -160,7 +163,7 @@ struct Grid {
 		return sum;
 	}
 	//棋局评估函数
-	long long Evaluate() { 
+	long long Evaluate() {
 		long long sum = 0;
 		int ptr = 0;
 
@@ -297,7 +300,7 @@ struct Grid {
 				if (getValueAt(i, j) != EMPTY) //当前格子不为空时，不能落子，跳过
 					continue;
 				bool flag = false;
-				for (int k = 0; k < SHIFT_LENGTH; k++) { 
+				for (int k = 0; k < SHIFT_LENGTH; k++) {
 					//当前格子周围邻接的格子如果有子，就把它当成一个可能的落子位置并加以评估
 					int value = getValueAt(i + XShift[k], j + YShift[k]);
 					if (value == PLAYER || value == BOT) {
@@ -306,7 +309,7 @@ struct Grid {
 					}
 				}
 				if (flag) //启发式评估成功之后加入优先队列进行排序
-					pq.emplace(PositionNode(i, j, EvaluateUnitDiff(depth, i, j)));
+					pq.emplace(i, j, EvaluateUnitDiff(depth, i, j));
 			}
 		}
 		if (depth == 0) { //若深度为0的话，首先选择启发式评估值最大的落子情况初始化返回的落子位置
@@ -348,7 +351,7 @@ struct Grid {
 					return beta;
 			}
 			else { //极小层进行α剪枝
-				if (selectedScore <= alpha) 
+				if (selectedScore <= alpha)
 					return alpha;
 			}
 		}
