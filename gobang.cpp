@@ -4,8 +4,15 @@
 #include <algorithm>
 #include <queue>
 #include <cstdint>
+#include <signal.h>
 #include "jsoncpp/json.h"
 using namespace std;
+
+bool terminateIndicator = false;
+void signalHandler(int sig) {
+	if (sig == SIGINT || sig == SIGTERM)
+		terminateIndicator = true;
+}
 
 //二维数组中的数值代表棋盘中摆放的棋子，每种数值代表一种棋子
 enum ChessPiece {
@@ -370,6 +377,7 @@ struct Grid {
 				if (selectedScore <= alpha)
 					return alpha;
 			}
+			if (terminateIndicator) break;
 		}
 		return selectedScore; //如果没有剪枝，返回最终的棋局评估结果
 	}
@@ -403,6 +411,9 @@ struct Grid {
 
 Grid grid;
 int main() {
+	signal(SIGINT, signalHandler);
+	signal(SIGTERM, signalHandler);
+
 	string str;
 	getline(cin, str);
 	Json::Reader reader;
