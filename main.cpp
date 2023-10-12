@@ -11,8 +11,10 @@ using namespace std;
 enum ChessPiece {
 	NOT_EXIST = -1, //该位置不存在（数组越界）
 	EMPTY = 0, //该位置为空
-	BOT, //该位置为机器人的棋子
-	PLAYER //该位置为人类的棋子
+	PIECE_START,
+	BOT = PIECE_START, //该位置为机器人的棋子
+	PLAYER, //该位置为人类的棋子
+	PIECE_END = PLAYER
 };
 
 const int SIZE = 15; //棋盘边长
@@ -58,6 +60,7 @@ enum ChessboardLineType {
 class ChessboardLine {
 	ChessboardLineType type;
 	int x, y; // 棋盘中第一优先靠左、第二优先靠上元素的横纵坐标
+	int _size;
 public:
 	ChessboardLine(ChessboardLineType type, int x, int y): type(type) {
 		switch (type) {
@@ -84,21 +87,23 @@ public:
 				break;
 			}
 		}
+		_size = NOT_EXIST;
 	}
-	int size() const {
+	int size() {
+		if (_size != NOT_EXIST) return _size;
 		switch (type) {
 			case LINE:
 			case ROW: {
-				return SIZE;
+				return _size = SIZE;
 			}
 			case ULLRDiagonal: {
-				return min(SIZE - x, SIZE - y);
+				return _size = min(SIZE - x, SIZE - y);
 			}
 			case LLURDiagonal: {
 				if (y == 0)
-					return x + 1;
+					return _size = x + 1;
 				else // x == SIZE
-					return SIZE - y;
+					return _size = SIZE - y;
 			}
 		}
 		assert(false);
@@ -128,10 +133,9 @@ public:
 			case ROW: {
 				return y;
 			}
-			case ULLRDiagonal: {
-				return y + index;
-			}
-			case LLURDiagonal: {
+			case ULLRDiagonal:
+			case LLURDiagonal:
+			{
 				return y + index;
 			}
 		}
@@ -141,6 +145,8 @@ public:
 
 struct Grid {
 	ChessPiece grid[SIZE][SIZE]; //二维数组模拟棋盘
+	bool unitDiffStorageValid[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数有效指示
+	long long unitDiffStorage[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数
 	//XShift和YShift数组是程序搜索过程中遍历指定方格的邻接方格的偏移量
 	const int XShift[SHIFT_LENGTH] = { -1, -1, -1, 0, 0, 1, 1, 1 };
 	const int YShift[SHIFT_LENGTH] = { -1, 0, 1, -1, 1, -1, 0, 1 };
@@ -150,8 +156,11 @@ struct Grid {
 	const long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 1000000 };
 
 	//将类型为value的棋子落子在棋盘(x,y)坐标，成功返回true，坐标不存在返回false
-	inline bool placeAt(int x, int y, ChessPiece value) {
+	inline bool placeAt(int x, int y, ChessPiece value, bool invalidate = false) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE) {
+			if (invalidate) {
+				if (grid[x][y] != value) invalidateUnitDiff(x, y);
+			}
 			grid[x][y] = value;
 			return true;
 		}
@@ -238,49 +247,6 @@ struct Grid {
 				));
 		return sum;
 	}
-	//棋局评估函数
-	long long Evaluate() {
-		long long sum = 0;
-		int ptr = 0;
-
-		// 评估每一行
-		for (int i = 0; i < SIZE; i++) {
-			ChessboardLine chessboardLine(LINE, i, 0);
-			sum += SequenceEvaluate(chessboardLine);
-		}
-		// 评估每一列
-		for (int i = 0; i < SIZE; i++) {
-			ChessboardLine chessboardRow(ROW, 0, i);
-			sum += SequenceEvaluate(chessboardRow);
-		}
-		// 评估每个左上-右下对角线
-
-		// 左侧第0列开始的对角线
-		for (int line = 0; line < SIZE; line++) {
-			ChessboardLine chessboardULLR(ULLRDiagonal, line, 0);
-			sum += SequenceEvaluate(chessboardULLR);
-		}
-
-		// 上侧第0行开始的对角线
-		for (int row = 1; row < SIZE; row++) {
-			ChessboardLine chessboardULLR(ULLRDiagonal, 0, row);
-			sum += SequenceEvaluate(chessboardULLR);
-		}
-		// 评估每个右上-左下对角线
-
-		// 右侧第14列开始的对角线
-		for (int line = 0; line < SIZE; line++) {
-			ChessboardLine chessboardLLUR(LLURDiagonal, line, SIZE - 1);
-			sum += SequenceEvaluate(chessboardLLUR);
-		}
-
-		// 上侧第0行开始的对角线
-		for (int row = 0; row < SIZE - 1; row++) {
-			ChessboardLine chessboardLLUR(LLURDiagonal, 0, row);
-			sum += SequenceEvaluate(chessboardLLUR);
-		}
-		return sum;
-	}
 	//评估坐标(x,y)处所对应的分数
 	long long EvaluateUnit(int x, int y) {
 		long long sum = 0;
@@ -306,19 +272,38 @@ struct Grid {
 		}
 		return sum;
 	}
+	// 差分地使记忆化评估差分分数无效
+	void invalidateUnitDiff(int x, int y) {
+		constexpr int ChessboardLineCount = 4;
+		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
+			ChessboardLine(LINE, x, 0), // 行
+			ChessboardLine(ROW, 0, y), // 列
+			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+		};
+		for (int k = 0; k < ChessboardLineCount; k++) {
+			for (int i = 0; i < ChessboardLineArr[k].size(); i++) {
+				unitDiffStorageValid[BOT - PIECE_START][ChessboardLineArr[k].i(i)][ChessboardLineArr[k].j(i)] = false;
+				unitDiffStorageValid[PLAYER - PIECE_START][ChessboardLineArr[k].i(i)][ChessboardLineArr[k].j(i)] = false;
+			}
+		}
+	}
 	//评估在坐标(x,y)处落子时，对总评估分数会产生的差值，这样可以加快搜索速度
 	//落子种类由搜索深度决定
-	long long EvaluateUnitDiff(int depth, int x, int y) {
+	long long EvaluateUnitDiff(ChessPiece piece, int x, int y) {
+		if (unitDiffStorageValid[piece - PIECE_START][x][y])
+			return unitDiffStorage[piece - PIECE_START][x][y];
 		placeAt(x, y, EMPTY);
 		long long sum1 = EvaluateUnit(x, y);
-		placeAt(x, y, depth % 2 == 0 ? BOT : PLAYER);
+		placeAt(x, y, piece);
 		long long sum2 = EvaluateUnit(x, y);
 		placeAt(x, y, EMPTY);
-		return sum2 - sum1;
+		unitDiffStorageValid[piece - PIECE_START][x][y] = true;
+		return unitDiffStorage[piece - PIECE_START][x][y] = sum2 - sum1;
 	}
 	//极大极小搜索与α-β剪枝搜索函数
 	//参数为当前搜索深度depth，返回的落子位置数据结构movePos，α值alpha，β值beta，棋局评估分数evaluationValue
-	long long DFS2(int depth, Position* movePos, long long alpha, long long beta, long long evaluationValue) {
+	long long minimaxSearch(int depth, Position* movePos, long long alpha, long long beta, long long evaluationValue) {
 		//depth%2==0时为BOT，depth%2==1时为PLAYER
 		if (depth == DEPTH) //到达边界深度时，结束搜索，直接返回棋局评估分数
 			return evaluationValue;
@@ -340,7 +325,7 @@ struct Grid {
 					}
 				}
 				if (flag) //启发式评估成功之后加入优先队列进行排序
-					pq.emplace(i, j, EvaluateUnitDiff(depth, i, j));
+					pq.emplace(i, j, EvaluateUnitDiff(depth % 2 == 0 ? BOT : PLAYER, i, j));
 			}
 		}
 		if (depth == 0) { //若深度为0的话，首先选择启发式评估值最大的落子情况初始化返回的落子位置
@@ -353,13 +338,13 @@ struct Grid {
 			PositionNode curPositionNode = pq.top();
 			pq.pop();
 			int i = curPositionNode.x, j = curPositionNode.y;
-			placeAt(i, j, depth % 2 == 0 ? BOT : PLAYER); //根据搜索层数选择落子类型是机器人还是人类
+			placeAt(i, j, depth % 2 == 0 ? BOT : PLAYER, true); //根据搜索层数选择落子类型是机器人还是人类
 			long long curScore;
 			if (depth % 2 == 0) { // 极大层节点时，继续搜索极小层节点
-				curScore = DFS2(depth + 1, NULL, selectedScore, beta, evaluationValue + curPositionNode.priority);
+				curScore = minimaxSearch(depth + 1, NULL, selectedScore, beta, evaluationValue + curPositionNode.priority);
 			}
 			else { // 极小层节点时，继续搜索极大层节点
-				curScore = DFS2(depth + 1, NULL, alpha, selectedScore, evaluationValue + curPositionNode.priority);
+				curScore = minimaxSearch(depth + 1, NULL, alpha, selectedScore, evaluationValue + curPositionNode.priority);
 			}
 			if (depth % 2 == 0) { //极大层节点，取最大的棋局评估值更新α值
 				if (selectedScore < curScore) {
@@ -375,7 +360,7 @@ struct Grid {
 					selectedScore = curScore;
 				}
 			}
-			placeAt(i, j, EMPTY); //回溯
+			placeAt(i, j, EMPTY, true); //回溯
 			//α-β剪枝
 			if (depth % 2 == 0) { //极大层进行β剪枝
 				if (selectedScore >= beta)
@@ -393,10 +378,11 @@ struct Grid {
 	{
 		Position move;
 		Json::Value action;
+		memset(unitDiffStorageValid, false, sizeof(unitDiffStorageValid));
 		if (cnter != 0) { //机器人后手的情况
 			long long evaluationValue = INT64_MIN;
-			for (DEPTH = 2; DEPTH <= 4; DEPTH += 2) { //分别搜索两层和四层的情况，取最优解
-				long long tmpEvaluationValue = DFS2(0, &move, INT64_MIN, INT64_MAX, 0);
+			for (DEPTH = 2; DEPTH <= 6; DEPTH += 2) { //分别搜索两、四、六层的情况，取最优解
+				long long tmpEvaluationValue = minimaxSearch(0, &move, INT64_MIN, INT64_MAX, 0);
 				if (tmpEvaluationValue > evaluationValue) {
 					action["x"] = move.x;
 					action["y"] = move.y;
