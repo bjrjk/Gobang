@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <signal.h>
 #include "jsoncpp/json.h"
+#include "gobang.h"
 using namespace std;
 
 bool terminateIndicator = false;
@@ -14,17 +15,6 @@ void signalHandler(int sig) {
 		terminateIndicator = true;
 }
 
-//二维数组中的数值代表棋盘中摆放的棋子，每种数值代表一种棋子
-enum ChessPiece {
-	NOT_EXIST = -1, //该位置不存在（数组越界）
-	EMPTY = 0, //该位置为空
-	PIECE_START,
-	BOT = PIECE_START, //该位置为机器人的棋子
-	PLAYER, //该位置为人类的棋子
-	PIECE_END = PLAYER
-};
-
-const int SIZE = 15; //棋盘边长
 int DEPTH; //极大极小搜索深度
 const int SCORE_LENGTH = 6; //Score*数组的长度
 const int SHIFT_LENGTH = 8; //*Shift数组的长度
