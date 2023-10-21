@@ -138,7 +138,7 @@ bool judgeWins() {
         "./gobang",
         serializedJSONMessage.c_str(), serializedJSONMessage.size(),
         responseBuf, sizeof(responseBuf) - 1, &responseSize,
-        15 
+        0
     );
     if (!retValue) return false;
     responseBuf[responseSize] = '\0';
