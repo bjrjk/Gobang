@@ -432,18 +432,29 @@ int main() {
 	if (grid.placeAt(input["requests"][turnID]["x"].asInt(), input["requests"][turnID]["y"].asInt(), PLAYER))
 		cnter++;
 	Json::Value ret;
-	ChessPiece finishedChess = grid.judgeFinished();
-	if (finishedChess == EMPTY) {
-		ret["status"] = 1;
-		ret["response"] = grid.ChoosePosition(cnter);
-	} else {
-		ret["status"] = 0;
-		if (finishedChess == PLAYER)
-			ret["prompt"] = "Player wins!";
-		else if (finishedChess == BOT)
-			ret["prompt"] = "Bot wins!";
-		else 
-			ret["prompt"] = "Unknown error: wins";
+	int requestType = input["type"].asInt();
+	switch (requestType) {
+		case 0: // Minimax Search
+		{
+			ret["response"] = grid.ChoosePosition(cnter);
+			break;
+		}
+		case 1: // Judge Finished
+		{
+			ChessPiece finishedChess = grid.judgeFinished();
+			if (finishedChess == EMPTY) {
+				ret["status"] = 0;
+			} else {
+				ret["status"] = 1;
+				if (finishedChess == PLAYER)
+					ret["prompt"] = "Player wins!";
+				else if (finishedChess == BOT)
+					ret["prompt"] = "Bot wins!";
+				else
+					ret["prompt"] = "Unknown error: wins";
+			}
+			break;
+		}
 	}
 	Json::FastWriter writer;
 	cout << writer.write(ret) << endl;

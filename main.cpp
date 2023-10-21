@@ -92,9 +92,45 @@ bool player(bool inputFlag = true) {
     return true;
 }
 bool robot() {
+    message["type"] = 0;
     std::string serializedJSONMessage = getJSONText(message);
     serializedJSONMessage.append("\n");
-    printf("%s", serializedJSONMessage.c_str());
+    printf("Debug: %s\n", serializedJSONMessage.c_str());
+    
+    char responseBuf[0x1000];
+    unsigned long responseSize;
+    int retValue = createProcessWithGivenStdinAndGetStdout(
+        "./gobang",
+        serializedJSONMessage.c_str(), serializedJSONMessage.size(),
+        responseBuf, sizeof(responseBuf) - 1, &responseSize,
+        15 
+    );
+    if (!retValue) return false;
+    responseBuf[responseSize] = '\0';
+
+    Json::Reader reader;
+    Json::Value response;
+    reader.parse(responseBuf, response);
+
+    int x, y;
+    x = response["response"]["x"].asInt();
+    y = response["response"]["y"].asInt();
+
+    grid[x][y] = BOT;
+    curRobotX = x;
+    curRobotY = y;
+
+    Json::Value placement;
+    placement["x"] = x;
+    placement["y"] = y;
+    message["responses"].append(placement);
+
+    return true;
+}
+bool judgeWins() {
+    message["type"] = 1;
+    std::string serializedJSONMessage = getJSONText(message);
+    serializedJSONMessage.append("\n");
     
     char responseBuf[0x1000];
     unsigned long responseSize;
@@ -112,28 +148,13 @@ bool robot() {
     reader.parse(responseBuf, response);
 
     int status = response["status"].asInt();
-    if (status == 0) {
+    if (status == 1) {
+        clearScreen();
+        displayGrid();
         printf("%s\n", response["prompt"].asCString());
-
         return false;
-    } else if (status == 1) {
-        int x, y;
-        x = response["response"]["x"].asInt();
-        y = response["response"]["y"].asInt();
-
-        grid[x][y] = BOT;
-        curRobotX = x;
-        curRobotY = y;
-
-        Json::Value placement;
-        placement["x"] = x;
-        placement["y"] = y;
-        message["responses"].append(placement);
-
-        return true;
     }
-
-    return false;
+    return true;
 }
 int main() {
     bool flag;
@@ -154,6 +175,7 @@ int main() {
         if (choice == 0) flag = player();
         else if (choice == 1) flag = robot();
         if (!flag) return 0;
+        if (!judgeWins()) return 0;
         choice = (choice + 1) % 2;
     }
 }
