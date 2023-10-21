@@ -11,7 +11,7 @@ using namespace std;
 
 bool terminateIndicator = false;
 void signalHandler(int sig) {
-	if (sig == SIGINT || sig == SIGTERM)
+	if (sig == SIGINT || sig == SIGTERM || sig == SIGALRM)
 		terminateIndicator = true;
 }
 
@@ -215,7 +215,7 @@ struct Grid {
 		return cnt;
 	}
 	//计算ChessboardLine line所指定的连成一条线上的棋子的评估分数
-	long long SequenceEvaluate(ChessboardLine &line) {
+	long long SequenceEvaluate(ChessboardLine &line, ChessPiece * isFinished = NULL) {
 		int lineSize = line.size();
 		long long sum = 0;
 		ChessPiece status = EMPTY;
@@ -226,6 +226,7 @@ struct Grid {
 				cnt++;
 			else {
 				rightEdge = i;
+				if (isFinished && status != EMPTY && cnt == 5) *isFinished = status;
 				sum += getScore(status, cnt,
 					calculateEdgeSituation(
 						getValueAt(line.i(leftEdge), line.j(leftEdge)),
@@ -237,6 +238,7 @@ struct Grid {
 			}
 		}
 		rightEdge = lineSize;
+		if (isFinished && status != EMPTY && cnt == 5) *isFinished = status;
 		sum += getScore(status, cnt,
 			calculateEdgeSituation(
 				getValueAt(line.i(leftEdge), line.j(leftEdge)),
@@ -245,27 +247,27 @@ struct Grid {
 		return sum;
 	}
 	//评估坐标(x,y)处所对应的分数
-	long long EvaluateUnit(int x, int y) {
+	long long EvaluateUnit(int x, int y, ChessPiece * isFinished = NULL) {
 		long long sum = 0;
 		{
 			// 评估行
 			ChessboardLine chessboardLine(LINE, x, 0);
-			sum += SequenceEvaluate(chessboardLine);
+			sum += SequenceEvaluate(chessboardLine, isFinished);
 		}
 		{
 			// 评估列
 			ChessboardLine chessboardRow(ROW, 0, y);
-			sum += SequenceEvaluate(chessboardRow);
+			sum += SequenceEvaluate(chessboardRow, isFinished);
 		}
 		{
 			// 评估左上-右下对角线
 			ChessboardLine chessboardULLR(ULLRDiagonal, x, y);
-			sum += SequenceEvaluate(chessboardULLR);
+			sum += SequenceEvaluate(chessboardULLR, isFinished);
 		}
 		{
 			// 评估右上-左下对角线
 			ChessboardLine chessboardLLUR(LLURDiagonal, x, y);
-			sum += SequenceEvaluate(chessboardLLUR);
+			sum += SequenceEvaluate(chessboardLLUR, isFinished);
 		}
 		return sum;
 	}
@@ -394,6 +396,15 @@ struct Grid {
 		}
 		return action;
 	}
+	ChessPiece judgeFinished() {
+		ChessPiece isFinished = EMPTY;
+		for (int i = 0; i < SIZE; i++) {
+			for (int j = 0; j < SIZE; j++) {
+				EvaluateUnit(i, j, &isFinished);
+			}
+		}
+		return isFinished;
+	}
 	Grid() {
 		memset(grid, EMPTY, sizeof(grid));
 	}
@@ -403,6 +414,7 @@ Grid grid;
 int main() {
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
+	signal(SIGALRM, signalHandler);
 
 	string str;
 	getline(cin, str);
@@ -420,7 +432,19 @@ int main() {
 	if (grid.placeAt(input["requests"][turnID]["x"].asInt(), input["requests"][turnID]["y"].asInt(), PLAYER))
 		cnter++;
 	Json::Value ret;
-	ret["response"] = grid.ChoosePosition(cnter);
+	ChessPiece finishedChess = grid.judgeFinished();
+	if (finishedChess == EMPTY) {
+		ret["status"] = 1;
+		ret["response"] = grid.ChoosePosition(cnter);
+	} else {
+		ret["status"] = 0;
+		if (finishedChess == PLAYER)
+			ret["prompt"] = "Player wins!";
+		else if (finishedChess == BOT)
+			ret["prompt"] = "Bot wins!";
+		else 
+			ret["prompt"] = "Unknown error: wins";
+	}
 	Json::FastWriter writer;
 	cout << writer.write(ret) << endl;
 	return 0;

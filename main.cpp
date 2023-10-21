@@ -2,10 +2,13 @@
 #include <cstdio>
 #include "jsoncpp/json.h"
 #include "gobang.h"
+#include "exec.h"
 
 ChessPiece grid[SIZE][SIZE];
 char chessPieceChar[] = " XO";
 char chessPieceCurrentChar[] = " *#";
+int curPlayerX = -1, curPlayerY = -1;
+int curRobotX = -1, curRobotY = -1;
 
 Json::Value message;
 
@@ -22,7 +25,11 @@ void printSeparatorLine() {
 void printGridLine(int line, ChessPiece arr[]) {
     printf("%2d ", line);
     for (int i = 0; i < SIZE; i++) {
-        printf("|%c", chessPieceChar[arr[i]]);
+        char c;
+        c = chessPieceChar[arr[i]];
+        if (curRobotX == line && curRobotY == i) c = chessPieceCurrentChar[1];
+        if (curPlayerX == line && curPlayerY == i) c = chessPieceCurrentChar[2];
+        printf("|%c", c);
     }
     printf("|\n");
 }
@@ -56,13 +63,26 @@ bool player(bool inputFlag = true) {
     if (inputFlag) {
         clearScreen();
         displayGrid();
-        printf("Please input placement position (e.g. H7):");
-        scanf(" %c%d", &columnC, &row);
-        if (columnC < 'A' || columnC > 'O') return false;
-        if (row < 0 || row > 14) return false;
-        column = columnC - 'A';
 
-        grid[row][column] = PLAYER;
+        while (1) {
+            printf("Please input placement position (e.g. H7):");
+            if (scanf(" %c%d", &columnC, &row) != 2) return false;
+            if (columnC < 'A' || columnC > 'O') return false;
+            if (row < 0 || row > 14) return false;
+            column = columnC - 'A';
+
+            if (grid[row][column] != EMPTY) {
+                clearScreen();
+                printf("On %c%d already placed chess!\n", columnC, row);
+                displayGrid();
+                continue;
+            }
+            grid[row][column] = PLAYER;
+            break;
+        }
+        
+        curPlayerX = row;
+        curPlayerY = column;
     }
     
     Json::Value placement;
@@ -72,7 +92,48 @@ bool player(bool inputFlag = true) {
     return true;
 }
 bool robot() {
-    return true;
+    std::string serializedJSONMessage = getJSONText(message);
+    serializedJSONMessage.append("\n");
+    printf("%s", serializedJSONMessage.c_str());
+    
+    char responseBuf[0x1000];
+    unsigned long responseSize;
+    int retValue = createProcessWithGivenStdinAndGetStdout(
+        "./gobang",
+        serializedJSONMessage.c_str(), serializedJSONMessage.size(),
+        responseBuf, sizeof(responseBuf) - 1, &responseSize,
+        15 
+    );
+    if (!retValue) return false;
+    responseBuf[responseSize] = '\0';
+
+    Json::Reader reader;
+    Json::Value response;
+    reader.parse(responseBuf, response);
+
+    int status = response["status"].asInt();
+    if (status == 0) {
+        printf("%s\n", response["prompt"].asCString());
+
+        return false;
+    } else if (status == 1) {
+        int x, y;
+        x = response["response"]["x"].asInt();
+        y = response["response"]["y"].asInt();
+
+        grid[x][y] = BOT;
+        curRobotX = x;
+        curRobotY = y;
+
+        Json::Value placement;
+        placement["x"] = x;
+        placement["y"] = y;
+        message["responses"].append(placement);
+
+        return true;
+    }
+
+    return false;
 }
 int main() {
     bool flag;
