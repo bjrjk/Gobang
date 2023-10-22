@@ -8,6 +8,6 @@ if [ 0"$CXX" = "0" ]; then
     export CXX=g++
 fi
 
-$CXX gobang.cpp -o gobang -Ofast
+$CXX gobang.cpp -o gobang -Ofast --std=c++17
 $CC -c exec.c -o exec.o -O2
 $CXX exec.o main.cpp -o main -O2
