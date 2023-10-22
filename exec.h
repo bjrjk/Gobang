@@ -12,5 +12,5 @@ int createProcessWithGivenStdinAndGetStdout(
     const char * pathname, 
     const char * stdinBuf, unsigned long stdinBufSize,
     char * stdoutBuf, unsigned long stdoutBufSize, unsigned long * stdoutReadSize,
-    unsigned int alarmSecond
+    unsigned int alarmSecond, int prompt
 );

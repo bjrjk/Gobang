@@ -106,7 +106,7 @@ bool robot() {
         "./gobang",
         serializedJSONMessage.c_str(), serializedJSONMessage.size(),
         responseBuf, sizeof(responseBuf) - 1, &responseSize,
-        timeout
+        timeout, 1
     );
     if (!retValue) return false;
     responseBuf[responseSize] = '\0';
@@ -141,7 +141,7 @@ bool judgeWins() {
         "./gobang",
         serializedJSONMessage.c_str(), serializedJSONMessage.size(),
         responseBuf, sizeof(responseBuf) - 1, &responseSize,
-        0
+        0, 0
     );
     if (!retValue) return false;
     responseBuf[responseSize] = '\0';

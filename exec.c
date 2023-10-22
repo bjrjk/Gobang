@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <poll.h>
 
 #define INPUT 0 //Read End of Pipe
 #define OUTPUT 1 //Write End of Pipe
@@ -60,7 +61,7 @@ int createProcessWithGivenStdinAndGetStdout(
     const char * pathname, 
     const char * stdinBuf, unsigned long stdinBufSize,
     char * stdoutBuf, unsigned long stdoutBufSize, unsigned long * stdoutReadSize,
-    unsigned int alarmSecond
+    unsigned int alarmSecond, int prompt
 ) {
     int stdinFd, stdoutFd;
     // Create Process
@@ -76,11 +77,30 @@ int createProcessWithGivenStdinAndGetStdout(
         perror("close failed on stdinFd");
         return 0;
     }
-    // Receive output from subprocess's stdout
-    if ((*stdoutReadSize = read(stdoutFd, stdoutBuf, stdoutBufSize)) == -1) {
-        perror("read failed");
-        return 0;
+    if (prompt) {
+        int deciSecond = 0;
+        while (1) {
+            printf("\rTime elapsed: %3d.%1ds...", deciSecond / 10, deciSecond % 10);
+            fflush(stdout);
+            usleep(100000); // 0.1s
+            deciSecond++;
+            // Check whether data is available
+            if (poll(&(struct pollfd){ .fd = stdoutFd, .events = POLLIN }, 1, 0) == 1) {
+                if ((*stdoutReadSize = read(stdoutFd, stdoutBuf, stdoutBufSize)) == -1) {
+                    perror("read failed");
+                    return 0;
+                }
+                break;
+            }
+        }
+    } else {
+        // Receive output from subprocess's stdout
+        if ((*stdoutReadSize = read(stdoutFd, stdoutBuf, stdoutBufSize)) == -1) {
+            perror("read failed");
+            return 0;
+        }
     }
+
     // Recycle zombie subprocess
     int retCode;
     if (wait(&retCode) == -1) {
