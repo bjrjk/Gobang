@@ -1,19 +1,22 @@
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 #include "jsoncpp/json.h"
 #include "gobang.h"
 #include "exec.h"
 
 ChessPiece grid[SIZE][SIZE];
-char chessPieceChar[] = " XO";
-char chessPieceCurrentChar[] = " *#";
+const char chessPieceChar[] = " XO";
+const char chessPieceCurrentChar[] = " *#";
 int curPlayerX = -1, curPlayerY = -1;
 int curRobotX = -1, curRobotY = -1;
+int timeout = 15;
 
 Json::Value message;
 
 void clearScreen() {
     printf("\033c");
+    printf("Current timeout is %ds.\n", timeout);
 }
 void printSeparatorLine() {
     printf("   ");
@@ -103,7 +106,7 @@ bool robot() {
         "./gobang",
         serializedJSONMessage.c_str(), serializedJSONMessage.size(),
         responseBuf, sizeof(responseBuf) - 1, &responseSize,
-        15 
+        timeout
     );
     if (!retValue) return false;
     responseBuf[responseSize] = '\0';
@@ -156,11 +159,17 @@ bool judgeWins() {
     }
     return true;
 }
+void init() {
+    initJSONMessage();
+
+    char * timeoutEnv = std::getenv("TIMEOUT");
+    if (timeoutEnv) timeout = std::strtol(timeoutEnv, NULL, 10);
+}
 int main() {
     bool flag;
     int choice;
 
-    initJSONMessage();
+    init();
 
     clearScreen();
     printf("Choose who goes first:\n");
