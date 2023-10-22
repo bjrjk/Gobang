@@ -381,7 +381,7 @@ struct Grid {
 		memset(unitDiffStorageValid, false, sizeof(unitDiffStorageValid));
 		if (cnter != 0) { //机器人后手的情况
 			long long evaluationValue = INT64_MIN;
-			for (DEPTH = 4; DEPTH <= 6; DEPTH += 2) { //分别搜索四、六层的情况，取最优解
+			for (DEPTH = 4; DEPTH <= 10; DEPTH += 2) { //分别搜索4~10层的情况，取最优解，如果超时可中途退出
 				long long tmpEvaluationValue = minimaxSearch(0, &move, INT64_MIN, INT64_MAX, 0);
 				if (tmpEvaluationValue > evaluationValue) {
 					action["x"] = move.x;
