@@ -75,6 +75,7 @@ dkms.conf
 # Executables
 
 ### VisualStudioCode ###
+.vscode/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -98,3 +99,8 @@ dkms.conf
 ### MacOS
 
 .DS_Store
+
+# Executables
+gobang
+main
+gridTest
