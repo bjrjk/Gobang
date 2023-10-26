@@ -140,7 +140,7 @@ public:
 	}
 };
 
-struct Grid {
+struct Gobang {
 	ChessPiece grid[SIZE][SIZE]; //二维数组模拟棋盘
 	bool unitDiffStorageValid[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数有效指示
 	long long unitDiffStorage[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数
@@ -405,12 +405,12 @@ struct Grid {
 		}
 		return isFinished;
 	}
-	Grid() {
+	Gobang() {
 		memset(grid, EMPTY, sizeof(grid));
 	}
 };
 
-Grid grid;
+Gobang grid;
 int main() {
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
