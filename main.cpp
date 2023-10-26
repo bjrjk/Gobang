@@ -16,7 +16,9 @@ Json::Value message;
 
 void clearScreen() {
     printf("\033c");
-    printf("Current timeout is %ds.\n", timeout);
+    printf("Configurations: \n");
+    printf("  - Current timeout: %ds\n", timeout);
+    printf("\n");
 }
 void printSeparatorLine() {
     printf("   ");
@@ -98,7 +100,7 @@ bool robot() {
     message["type"] = 0;
     std::string serializedJSONMessage = getJSONText(message);
     serializedJSONMessage.append("\n");
-    printf("Debug: %s\n", serializedJSONMessage.c_str());
+    printf("Debug: %s", serializedJSONMessage.c_str());
     
     char responseBuf[0x1000];
     unsigned long responseSize;

@@ -1,15 +1,40 @@
+#define _XOPEN_SOURCE 600
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <poll.h>
+#include <time.h>
 
 #define INPUT 0 //Read End of Pipe
 #define OUTPUT 1 //Write End of Pipe
+
+static unsigned long long TimespecDiffInUs(const struct timespec * t1, const struct timespec * t2)
+{
+    struct timespec diff;
+    if (t2->tv_nsec - t1->tv_nsec < 0) {
+        diff.tv_sec  = t2->tv_sec - t1->tv_sec - 1;
+        diff.tv_nsec = t2->tv_nsec - t1->tv_nsec + 1000000000;
+    } else {
+        diff.tv_sec  = t2->tv_sec - t1->tv_sec;
+        diff.tv_nsec = t2->tv_nsec - t1->tv_nsec;
+    }
+    return (diff.tv_sec * 1000000.0 + diff.tv_nsec / 1000.0);
+}
+
+static struct timespec getMonotonicClockTime() {
+    struct timespec time;
+    if (clock_gettime(CLOCK_MONOTONIC, &time) == -1) {
+        perror("clock_gettime failed");
+        exit(1);
+    }
+    return time;
+}
 
 int createProcessWithRedirectedStdinAndStdout(
     const char * pathname, 
@@ -78,12 +103,13 @@ int createProcessWithGivenStdinAndGetStdout(
         return 0;
     }
     if (prompt) {
-        int deciSecond = 0;
+        struct timespec startTime = getMonotonicClockTime();
         while (1) {
-            printf("\rTime elapsed: %3d.%1ds...", deciSecond / 10, deciSecond % 10);
+            struct timespec currentTime = getMonotonicClockTime();
+            unsigned long long timeDiff = TimespecDiffInUs(&startTime, &currentTime);
+            printf("\rTime elapsed: %3lld.%06llds...", timeDiff / 1000000, timeDiff % 1000000);
             fflush(stdout);
             usleep(100000); // 0.1s
-            deciSecond++;
             // Check whether data is available
             if (poll(&(struct pollfd){ .fd = stdoutFd, .events = POLLIN }, 1, 0) == 1) {
                 if ((*stdoutReadSize = read(stdoutFd, stdoutBuf, stdoutBufSize)) == -1) {
@@ -93,6 +119,7 @@ int createProcessWithGivenStdinAndGetStdout(
                 break;
             }
         }
+        printf("\r");
     } else {
         // Receive output from subprocess's stdout
         if ((*stdoutReadSize = read(stdoutFd, stdoutBuf, stdoutBufSize)) == -1) {
