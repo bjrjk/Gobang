@@ -5,18 +5,51 @@
 
 #define BitsetWithGivenSize std::bitset<BITSET_SIZE>
 
-
 template <std::size_t BITSET_SIZE>
 class ChessboardLineBinaryGrid: public BitsetWithGivenSize {
     static_assert(BITSET_SIZE <= sizeof(uint64_t) * 8, 
         "Programmer defined custom operations only support basic integer types!");
+private:
+    const uint64_t bitsetSize;
+    inline void clearHighBits() {
+        if (bitsetSize < BITSET_SIZE) *this &= (1ULL << bitsetSize) - 1;
+    }
 public:
     // Initialized with all bits set
-    ChessboardLineBinaryGrid(): BitsetWithGivenSize() {
+    ChessboardLineBinaryGrid(uint64_t bitsetSize = BITSET_SIZE)
+        : BitsetWithGivenSize(), bitsetSize(bitsetSize) {
+        assert(bitsetSize <= BITSET_SIZE);
         this->set();
     }
+    bool operator [](std::size_t pos) const {
+        assert(pos < bitsetSize);
+        return BitsetWithGivenSize::operator[](pos);
+    }
+    ChessboardLineBinaryGrid& set() {
+        BitsetWithGivenSize::set();
+        clearHighBits();
+        return *this;
+    }
+    ChessboardLineBinaryGrid& set(std::size_t pos, bool value = true) {
+        assert(pos < bitsetSize);
+        BitsetWithGivenSize::set(pos, value);
+        return *this;
+    }
+    void reset() {
+        throw "Not implemented";
+    }
+    ChessboardLineBinaryGrid& flip() {
+        BitsetWithGivenSize::flip();
+        clearHighBits();
+        return *this;
+    }
+    ChessboardLineBinaryGrid& flip(std::size_t pos) {
+        assert(pos < bitsetSize);
+        BitsetWithGivenSize::flip(pos);
+        return *this;
+    }
     uint64_t getContiguousZeroCount(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
-        assert(position < BITSET_SIZE);
+        assert(position < bitsetSize);
         uint64_t value = this->to_ullong();
         uint64_t leftZeroCount, rightZeroCount;
         asm volatile ( // amd64 architecture
@@ -28,16 +61,25 @@ public:
             : [value] "r" (value), [position] "rm" (position)
             : "rcx"
         );
-        if ((int64_t) position - (int64_t) rightZeroCount < 0) rightZeroCount -= 64 - BITSET_SIZE;
+        if ((int64_t) position - (int64_t) rightZeroCount < 0) rightZeroCount -= 64 - bitsetSize;
         if (leftZeroCount == 64 && rightZeroCount == 64) {
             if (leftOnePosition) *leftOnePosition = -1;
             if (rightOnePosition) *rightOnePosition = -1;
-            return BITSET_SIZE;
+            return bitsetSize;
         }
-        if (leftOnePosition) *leftOnePosition = (position + leftZeroCount) % BITSET_SIZE;
-        if (rightOnePosition) *rightOnePosition = (position - rightZeroCount - 1 + BITSET_SIZE) % BITSET_SIZE;
+        if (leftOnePosition) *leftOnePosition = (position + leftZeroCount) % bitsetSize;
+        if (rightOnePosition) *rightOnePosition = (position - rightZeroCount - 1 + bitsetSize) % bitsetSize;
         return leftZeroCount + rightZeroCount;
     }
 };
 
-#undef BitsetWithGivenSize 
+#undef BitsetWithGivenSize
+
+class ChessboardGrid {
+private:
+    ChessboardLineBinaryGrid<15> lineGrids[15];
+    ChessboardLineBinaryGrid<15> rowGrids[15];
+
+public:
+
+};
