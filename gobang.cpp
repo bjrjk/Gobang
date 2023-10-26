@@ -16,8 +16,9 @@ void signalHandler(int sig) {
 }
 
 int DEPTH; //极大极小搜索深度
-const int SCORE_LENGTH = 6; //Score*数组的长度
-const int SHIFT_LENGTH = 8; //*Shift数组的长度
+constexpr int SCORE_LENGTH = 6; //Score*数组的长度
+constexpr int SHIFT_LENGTH = 8; //*Shift数组的长度
+static bool restrictedMove = false; //是否有禁手
 
 struct Position { //用来返回落子位置的数据结构
 	int x, y;
@@ -411,10 +412,16 @@ struct Gobang {
 };
 
 Gobang grid;
-int main() {
+void init() {
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
 	signal(SIGALRM, signalHandler);
+
+    char * restrictedMoveEnv = std::getenv("RESTRICTED_MOVE");
+    if (restrictedMoveEnv) restrictedMove = true;
+}
+int main() {
+	init();
 
 	string str;
 	getline(cin, str);

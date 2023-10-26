@@ -11,13 +11,15 @@ const char chessPieceCurrentChar[] = " *#";
 int curPlayerX = -1, curPlayerY = -1;
 int curRobotX = -1, curRobotY = -1;
 int timeout = 15;
+bool restrictedMove = false;
 
 Json::Value message;
 
 void clearScreen() {
     printf("\033c");
     printf("Configurations: \n");
-    printf("  - Current timeout: %ds\n", timeout);
+    printf("  - Current timeout (TIMEOUT): %ds\n", timeout);
+    printf("  - Restricted move (RESTRICTED_MOVE): %s\n", restrictedMove ? "Yes" : "No");
     printf("\n");
 }
 void printSeparatorLine() {
@@ -166,6 +168,8 @@ void init() {
 
     char * timeoutEnv = std::getenv("TIMEOUT");
     if (timeoutEnv) timeout = std::strtol(timeoutEnv, NULL, 10);
+    char * restrictedMoveEnv = std::getenv("RESTRICTED_MOVE");
+    if (restrictedMoveEnv) restrictedMove = true;
 }
 int main() {
     bool flag;
