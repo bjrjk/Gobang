@@ -2,6 +2,7 @@
 #include <cstring>
 #include <bitset>
 #include <cstdint>
+#include "gobang.h"
 
 #define BitsetWithGivenSize std::bitset<BITSET_SIZE>
 
@@ -80,16 +81,26 @@ public:
 
 class ChessboardGrid {
 private:
-    ChessboardLineBinaryGrid<15> lineGrids[15];
-    ChessboardLineBinaryGrid<15> rowGrids[15];
-    ChessboardLineBinaryGrid<15> ULLRDiagonalGrids[29], LLURDiagonalGrids[29];
+    /*
+        grids[EMPTY][*][*] for Both Player & Bot chesses' occupation;
+        grids[BOT][*][*] for Bot chesses' occupation;
+        grids[PLAYER][*][*] for Player chesses' occupation.
+        grids[*][LINE][i] for line occupation, i_{max} = 14, size of the third dimension is 15.
+        grids[*][ROW][i] for row occupation, i_{max} = 14, size of the third dimension is 15.
+        grids[*][ULLRDiagonal][i] for line occupation, i_{max} = 28, size of the third dimension is 29.
+        grids[*][LLURDiagonal][i] for line occupation, i_{max} = 28, size of the third dimension is 29.
+    */
+
+    ChessboardLineBinaryGrid<15> grids[PIECE_END + 1][LINE_TYPE_END + 1][30];
 public:
     ChessboardGrid() {
-        for (int i = 0; i < 15; i++) {
-            ULLRDiagonalGrids[i].resizeAndSet(i + 1);
-            ULLRDiagonalGrids[28 - i].resizeAndSet(i + 1);
-            LLURDiagonalGrids[i].resizeAndSet(i + 1);
-            LLURDiagonalGrids[28 - i].resizeAndSet(i + 1);
+        for (int k = EMPTY; k <= PIECE_END; k++) {
+            for (int i = 0; i < 15; i++) {
+                grids[k][ULLRDiagonal][i].resizeAndSet(i + 1);
+                grids[k][ULLRDiagonal][28 - i].resizeAndSet(i + 1);
+                grids[k][LLURDiagonal][i].resizeAndSet(i + 1);
+                grids[k][LLURDiagonal][28 - i].resizeAndSet(i + 1);
+            }
         }
     }
 };

@@ -48,13 +48,6 @@ struct PositionNode { //使用启发式评估对搜索落子顺序进行调整�
 	}
 };
 
-enum ChessboardLineType {
-	LINE, // 行
-	ROW, // 列
-	ULLRDiagonal, // 左上右下对角线 Upper Left - Lower Right
-	LLURDiagonal // 左下右上对角线 Lower Left - Upper Right
-};
-
 class ChessboardLine {
 	ChessboardLineType type;
 	int x, y; // 棋盘中第一优先靠左、第二优先靠上元素的横纵坐标

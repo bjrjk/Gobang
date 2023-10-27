@@ -10,4 +10,13 @@ enum ChessPiece {
 	PIECE_END = PLAYER
 };
 
-const static int SIZE = 15; //棋盘边长
+enum ChessboardLineType {
+	LINE, // 行
+	ROW, // 列
+	ULLRDiagonal, // 左上右下对角线 Upper Left - Lower Right
+	LLURDiagonal, // 左下右上对角线 Lower Left - Upper Right
+	LINE_TYPE_END = LLURDiagonal
+};
+
+constexpr static int SIZE = 15; //棋盘边长
+constexpr static int DIAGONAL_SIZE = 29; //棋盘单向对角线个数
