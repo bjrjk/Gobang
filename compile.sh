@@ -8,13 +8,19 @@ if [ 0"$CXX" = "0" ]; then
     export CXX=g++
 fi
 
-export CFLAGS=""
-export CXXFLAGS="--std=c++17"
+if [ 0"$DEBUG" != "0" ]; then
+    export OPTIMIZE="-g"
+else
+    export OPTIMIZE="-Ofast"
+fi
+
+export CFLAGS="$OPTIMIZE "
+export CXXFLAGS="$OPTIMIZE --std=c++17"
 
 # Executables
-$CXX gobang.cpp -o gobang -Ofast $CXXFLAGS
-$CC -c exec.c -o exec.o -O2 $CFLAGS
-$CXX exec.o main.cpp -o main -O2 $CXXFLAGS
+$CXX gobang.cpp -o gobang $CXXFLAGS
+$CC -c exec.c -o exec.o $CFLAGS
+$CXX exec.o main.cpp -o main $CXXFLAGS
 
 # Tests
-$CXX gridTest.cpp -o gridTest -g $CXXFLAGS
+$CXX gridTest.cpp -o gridTest $CXXFLAGS
