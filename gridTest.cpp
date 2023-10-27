@@ -93,7 +93,28 @@ void testGetContiguousZeroCount2() {
     assert(result == 5 && leftOnePosition == 3 && rightOnePosition == 12);
 }
 
+void testGetContiguousZeroCountNonRotate() {
+    ChessboardLineBinaryGrid<32> grid(15);
+    uint64_t leftOnePosition, rightOnePosition, result;
+
+    grid.set();
+    grid.flip(0);
+    grid.flip(1);
+    grid.flip(2);
+    grid.flip(13);
+    grid.flip(14);
+
+    result = grid.getContiguousZeroCountNonRotate(1, &leftOnePosition, &rightOnePosition);
+    printf("%lld %lld %lld\n", result, leftOnePosition, rightOnePosition);
+    assert(result == 3 && leftOnePosition == 3 && rightOnePosition == -1);
+
+    result = grid.getContiguousZeroCountNonRotate(14, &leftOnePosition, &rightOnePosition);
+    printf("%lld %lld %lld\n", result, leftOnePosition, rightOnePosition);
+    assert(result == 2 && leftOnePosition == 15 && rightOnePosition == 12);
+}
+
 int main() {
     testGetContiguousZeroCount1();
     testGetContiguousZeroCount2();
+    testGetContiguousZeroCountNonRotate();
 }

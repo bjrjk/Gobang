@@ -97,7 +97,10 @@ public:
         return leftZeroCount + rightZeroCount;
     }
     uint64_t getContiguousZeroCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
-
+        getContiguousZeroCount(position, leftOnePosition, rightOnePosition);
+        if (*rightOnePosition > position) *rightOnePosition = -1;
+        if (*leftOnePosition < position) *leftOnePosition = bitsetSize;
+        return (int64_t) *leftOnePosition - (int64_t) *rightOnePosition - 1;
     }
 };
 
