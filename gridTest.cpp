@@ -87,6 +87,10 @@ void testGetContiguousZeroCount2() {
     result = grid.getContiguousZeroCount(1, &leftOnePosition, &rightOnePosition);
     printf("%lld %lld %lld\n", result, leftOnePosition, rightOnePosition);
     assert(result == 5 && leftOnePosition == 3 && rightOnePosition == 12);
+
+    result = grid.getContiguousZeroCount(14, &leftOnePosition, &rightOnePosition);
+    printf("%lld %lld %lld\n", result, leftOnePosition, rightOnePosition);
+    assert(result == 5 && leftOnePosition == 3 && rightOnePosition == 12);
 }
 
 int main() {

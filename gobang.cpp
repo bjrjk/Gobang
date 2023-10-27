@@ -158,25 +158,15 @@ struct Gobang {
 	//评估坐标(x,y)处所对应的分数
 	long long EvaluateUnit(int x, int y, ChessPiece * isFinished = NULL) {
 		long long sum = 0;
-		{
-			// 评估行
-			ChessboardLine chessboardLine(LINE, x, 0);
-			sum += SequenceEvaluate(chessboardLine, isFinished);
-		}
-		{
-			// 评估列
-			ChessboardLine chessboardRow(ROW, 0, y);
-			sum += SequenceEvaluate(chessboardRow, isFinished);
-		}
-		{
-			// 评估左上-右下对角线
-			ChessboardLine chessboardULLR(ULLRDiagonal, x, y);
-			sum += SequenceEvaluate(chessboardULLR, isFinished);
-		}
-		{
-			// 评估右上-左下对角线
-			ChessboardLine chessboardLLUR(LLURDiagonal, x, y);
-			sum += SequenceEvaluate(chessboardLLUR, isFinished);
+		constexpr int ChessboardLineCount = 4;
+		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
+			ChessboardLine(LINE, x, 0), // 行
+			ChessboardLine(ROW, 0, y), // 列
+			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+		};
+		for (int k = 0; k < ChessboardLineCount; k++) {
+			sum += SequenceEvaluate(ChessboardLineArr[k], isFinished);
 		}
 		return sum;
 	}

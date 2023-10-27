@@ -85,6 +85,7 @@ public:
             : [value] "r" (value), [position] "rm" (position)
             : "rcx"
         );
+        if ((int64_t) position + (int64_t) leftZeroCount > 64) leftZeroCount -= 64 - bitsetSize;
         if ((int64_t) position - (int64_t) rightZeroCount < 0) rightZeroCount -= 64 - bitsetSize;
         if (leftZeroCount == 64 && rightZeroCount == 64) {
             if (leftOnePosition) *leftOnePosition = -1;
@@ -94,6 +95,9 @@ public:
         if (leftOnePosition) *leftOnePosition = (position + leftZeroCount) % bitsetSize;
         if (rightOnePosition) *rightOnePosition = (position - rightZeroCount - 1 + bitsetSize) % bitsetSize;
         return leftZeroCount + rightZeroCount;
+    }
+    uint64_t getContiguousZeroCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
+
     }
 };
 
