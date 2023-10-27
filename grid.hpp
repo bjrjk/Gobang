@@ -2,6 +2,7 @@
 #include <cstring>
 #include <bitset>
 #include <cstdint>
+#include <cassert>
 #include "gobang.h"
 
 #define BitsetWithGivenSize std::bitset<BITSET_SIZE>
@@ -27,9 +28,19 @@ public:
         *const_cast<uint64_t *>(&this->bitsetSize) = bitsetSize;
         this->set();
     }
+    bool operator ==(const ChessboardLineBinaryGrid& rhs) const = delete;
+    bool operator !=(const ChessboardLineBinaryGrid& rhs) const = delete;
     bool operator [](std::size_t pos) const {
         assert(pos < bitsetSize);
         return BitsetWithGivenSize::operator[](pos);
+    }
+    void test() = delete;
+    void all() = delete;
+    void any() = delete;
+    void none() = delete;
+    void count() = delete;
+    std::size_t size() const {
+        return bitsetSize;
     }
     ChessboardLineBinaryGrid& set() {
         BitsetWithGivenSize::set();
@@ -41,7 +52,16 @@ public:
         BitsetWithGivenSize::set(pos, value);
         return *this;
     }
-    void reset() = delete;
+    ChessboardLineBinaryGrid& reset() {
+        BitsetWithGivenSize::reset();
+        clearHighBits();
+        return *this;
+    }
+    ChessboardLineBinaryGrid& reset(std::size_t pos) {
+        assert(pos < bitsetSize);
+        BitsetWithGivenSize::reset(pos);
+        return *this;
+    }
     ChessboardLineBinaryGrid& flip() {
         BitsetWithGivenSize::flip();
         clearHighBits();
@@ -91,15 +111,65 @@ private:
         grids[*][LLURDiagonal][i] for line occupation, i_{max} = 28, size of the third dimension is 29.
     */
 
-    ChessboardLineBinaryGrid<15> grids[PIECE_END + 1][LINE_TYPE_END + 1][30];
+    ChessboardLineBinaryGrid<SIZE> grids[PIECE_END + 1][LINE_TYPE_END + 1][DIAGONAL_SIZE];
 public:
     ChessboardGrid() {
         for (int k = EMPTY; k <= PIECE_END; k++) {
-            for (int i = 0; i < 15; i++) {
+            for (int i = 0; i < SIZE; i++) {
                 grids[k][ULLRDiagonal][i].resizeAndSet(i + 1);
-                grids[k][ULLRDiagonal][28 - i].resizeAndSet(i + 1);
+                grids[k][ULLRDiagonal][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
                 grids[k][LLURDiagonal][i].resizeAndSet(i + 1);
-                grids[k][LLURDiagonal][28 - i].resizeAndSet(i + 1);
+                grids[k][LLURDiagonal][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
+            }
+        }
+    }
+    ChessPiece get(uint64_t x, uint64_t y) const {
+        assert(x < SIZE && y < SIZE);
+        if (grids[BOT][LINE][x][y]) return BOT;
+        else if (grids[PLAYER][LINE][x][y]) return PLAYER;
+        else return EMPTY;
+    }
+    void set(int x, int y, ChessPiece value) {
+        constexpr int ChessboardLineCount = 4;
+		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
+			ChessboardLine(LINE, x, 0), // 行
+			ChessboardLine(ROW, 0, y), // 列
+			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+		};
+        switch (value) {
+            case EMPTY: {
+                for (int i = 0; i < ChessboardLineCount; i++) {
+                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                }
+                break;
+            }
+            case BOT: {
+                for (int i = 0; i < ChessboardLineCount; i++) {
+                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .set(ChessboardLineArr[i].getIndex(x, y));
+                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .set(ChessboardLineArr[i].getIndex(x, y));
+                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                }
+                break;
+            }
+            case PLAYER: {
+                for (int i = 0; i < ChessboardLineCount; i++) {
+                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .set(ChessboardLineArr[i].getIndex(x, y));
+                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .set(ChessboardLineArr[i].getIndex(x, y));
+                }
+                break;
             }
         }
     }
