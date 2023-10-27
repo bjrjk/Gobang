@@ -11,7 +11,7 @@ fi
 if [ 0"$DEBUG" != "0" ]; then
     export OPTIMIZE="-g"
 else
-    export OPTIMIZE="-Ofast"
+    export OPTIMIZE="-Ofast -DNDEBUG"
 fi
 
 export CFLAGS="$OPTIMIZE "

@@ -97,6 +97,7 @@ public:
 			}
 		}
 		assert(false);
+		return NOT_EXIST;
 	}
 	int i(int index) const {
 		switch (type) {
@@ -113,6 +114,7 @@ public:
 				return x - index;
 			}
 		}
+		assert(false);
 		return NOT_EXIST;
 	}
 	int j(int index) const {
@@ -129,6 +131,7 @@ public:
 				return y + index;
 			}
 		}
+		assert(false);
 		return NOT_EXIST;
 	}
 	int getIndex(int i, int j) const {
