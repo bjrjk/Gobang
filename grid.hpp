@@ -109,6 +109,8 @@ private:
         grids[*][ROW][i] for row occupation, i_{max} = 14, size of the third dimension is 15.
         grids[*][ULLRDiagonal][i] for line occupation, i_{max} = 28, size of the third dimension is 29.
         grids[*][LLURDiagonal][i] for line occupation, i_{max} = 28, size of the third dimension is 29.
+
+        0 is placed, 1 is unplaced.
     */
 
     ChessboardLineBinaryGrid<SIZE> grids[PIECE_END + 1][LINE_TYPE_END + 1][DIAGONAL_SIZE];
@@ -125,8 +127,8 @@ public:
     }
     ChessPiece get(uint64_t x, uint64_t y) const {
         assert(x < SIZE && y < SIZE);
-        if (grids[BOT][LINE][x][y]) return BOT;
-        else if (grids[PLAYER][LINE][x][y]) return PLAYER;
+        if (!grids[BOT][LINE][x][y]) return BOT;
+        else if (!grids[PLAYER][LINE][x][y]) return PLAYER;
         else return EMPTY;
     }
     void set(int x, int y, ChessPiece value) {
@@ -141,33 +143,33 @@ public:
             case EMPTY: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
                     grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                        .set(ChessboardLineArr[i].getIndex(x, y));
                     grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                        .set(ChessboardLineArr[i].getIndex(x, y));
                     grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                        .set(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
             }
             case BOT: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
                     grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
+                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
+                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .set(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
             }
             case PLAYER: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
                     grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
-                        .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
-                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
+                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                        .reset(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
             }

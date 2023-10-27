@@ -7,6 +7,7 @@
 #include <signal.h>
 #include "jsoncpp/json.h"
 #include "gobang.h"
+#include "grid.hpp"
 using namespace std;
 
 bool terminateIndicator = false;
@@ -49,7 +50,7 @@ struct PositionNode { //使用启发式评估对搜索落子顺序进行调整�
 };
 
 struct Gobang {
-	ChessPiece grid[SIZE][SIZE]; //二维数组模拟棋盘
+	ChessboardGrid grid; //经位图优化的二维模拟棋盘
 	bool unitDiffStorageValid[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数有效指示
 	long long unitDiffStorage[PIECE_END][SIZE][SIZE]; //记忆化的评估差分分数
 	//XShift和YShift数组是程序搜索过程中遍历指定方格的邻接方格的偏移量
@@ -64,9 +65,9 @@ struct Gobang {
 	inline bool placeAt(int x, int y, ChessPiece value, bool invalidate = false) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE) {
 			if (invalidate) {
-				if (grid[x][y] != value) invalidateUnitDiff(x, y);
+				if (grid.get(x, y) != value) invalidateUnitDiff(x, y);
 			}
-			grid[x][y] = value;
+			grid.set(x, y, value);
 			return true;
 		}
 		return false;
@@ -74,7 +75,7 @@ struct Gobang {
 	//获得棋盘上(x,y)坐标位置的棋子类型，若坐标不存在返回NOT_EXIST
 	inline ChessPiece getValueAt(int x, int y) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE)
-			return grid[x][y];
+			return grid.get(x, y);
 		else
 			return NOT_EXIST;
 	}
@@ -313,9 +314,7 @@ struct Gobang {
 		}
 		return isFinished;
 	}
-	Gobang() {
-		memset(grid, EMPTY, sizeof(grid));
-	}
+	Gobang() {}
 };
 
 Gobang grid;
