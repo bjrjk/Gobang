@@ -46,7 +46,7 @@ public:
 				break;
 			}
 			case LLURDiagonal: {
-				int shift = std::min(SIZE - x, y);
+				int shift = std::min(SIZE - 1 - x, y);
 				this->x = x + shift;
 				this->y = y - shift;
 				break;
@@ -66,13 +66,15 @@ public:
 			}
 			case ULLRDiagonal:
 			{
-				return (!!this->x) * (SIZE - 1) + this->x + this->y;
+				return (!this->x) * (SIZE - 1 - this->y) + (!!this->x) * (SIZE - 1 + this->x);
 			}
 			case LLURDiagonal:
 			{
 				return this->x + this->y;
 			}
 		}
+		assert(false);
+		return NOT_EXIST;
 	}
 	inline ChessboardLineType getType() const {
 		return this->type;
