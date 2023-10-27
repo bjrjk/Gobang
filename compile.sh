@@ -8,10 +8,13 @@ if [ 0"$CXX" = "0" ]; then
     export CXX=g++
 fi
 
+export CFLAGS=""
+export CXXFLAGS="--std=c++17"
+
 # Executables
-$CXX gobang.cpp -o gobang -Ofast --std=c++17
-$CC -c exec.c -o exec.o -O2
-$CXX exec.o main.cpp -o main -O2
+$CXX gobang.cpp -o gobang -Ofast $CXXFLAGS
+$CC -c exec.c -o exec.o -O2 $CFLAGS
+$CXX exec.o main.cpp -o main -O2 $CXXFLAGS
 
 # Tests
-$CXX gridTest.cpp -o gridTest -g
+$CXX gridTest.cpp -o gridTest -g $CXXFLAGS

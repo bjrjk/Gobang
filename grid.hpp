@@ -21,6 +21,11 @@ public:
         assert(bitsetSize <= BITSET_SIZE);
         this->set();
     }
+    void resizeAndSet(uint64_t bitsetSize) {
+        assert(bitsetSize <= BITSET_SIZE);
+        *const_cast<uint64_t *>(&this->bitsetSize) = bitsetSize;
+        this->set();
+    }
     bool operator [](std::size_t pos) const {
         assert(pos < bitsetSize);
         return BitsetWithGivenSize::operator[](pos);
@@ -35,9 +40,7 @@ public:
         BitsetWithGivenSize::set(pos, value);
         return *this;
     }
-    void reset() {
-        throw "Not implemented";
-    }
+    void reset() = delete;
     ChessboardLineBinaryGrid& flip() {
         BitsetWithGivenSize::flip();
         clearHighBits();
@@ -79,7 +82,14 @@ class ChessboardGrid {
 private:
     ChessboardLineBinaryGrid<15> lineGrids[15];
     ChessboardLineBinaryGrid<15> rowGrids[15];
-
+    ChessboardLineBinaryGrid<15> ULLRDiagonalGrids[29], LLURDiagonalGrids[29];
 public:
-
+    ChessboardGrid() {
+        for (int i = 0; i < 15; i++) {
+            ULLRDiagonalGrids[i].resizeAndSet(i + 1);
+            ULLRDiagonalGrids[28 - i].resizeAndSet(i + 1);
+            LLURDiagonalGrids[i].resizeAndSet(i + 1);
+            LLURDiagonalGrids[28 - i].resizeAndSet(i + 1);
+        }
+    }
 };
