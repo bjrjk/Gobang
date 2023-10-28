@@ -205,7 +205,7 @@ public:
         auto getPleceInChessboardLine = [&] (int pos) {
                 if (!grids[BOT][lineType][uniqueID][pos]) return BOT;
                 else if (!grids[PLAYER][lineType][uniqueID][pos]) return PLAYER;
-                else return NOT_EXIST;
+                else return EMPTY;
         };
         for (uint64_t i = emptyGrids.findFirstZeroAscendingNonRotate(0); i < bitsetSize; i = emptyGrids.findFirstZeroAscendingNonRotate(i)) {
             ChessPiece currentPiece = getPleceInChessboardLine(i);
