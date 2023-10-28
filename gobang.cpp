@@ -115,7 +115,7 @@ struct Gobang {
 		}
 	}
 	//传入两边的棋子状态，计算两边为空的位置格数
-	inline int calculateEdgeSituation(int leftEdgeStatus, int rightEdgeStatus) {
+	inline int calculateEdgeSituation(ChessPiece leftEdgeStatus, ChessPiece rightEdgeStatus) {
 		int cnt = 0;
 		if (EMPTY == leftEdgeStatus)
 			cnt++;
@@ -125,34 +125,14 @@ struct Gobang {
 	}
 	//计算ChessboardLine line所指定的连成一条线上的棋子的评估分数
 	long long SequenceEvaluate(ChessboardLine &line, ChessPiece * isFinished = NULL) {
-		int lineSize = line.size();
 		long long sum = 0;
-		ChessPiece status = EMPTY;
-		int cnt = 0, leftEdge = -1, rightEdge;
-		for (int i = 0; i < lineSize; i++) {
-			ChessPiece curGrid = getValueAt(line.i(i), line.j(i));
-			if (status == curGrid)
-				cnt++;
-			else {
-				rightEdge = i;
-				if (isFinished && status != EMPTY && cnt == 5) *isFinished = status;
-				sum += getScore(status, cnt,
-					calculateEdgeSituation(
-						getValueAt(line.i(leftEdge), line.j(leftEdge)),
-						getValueAt(line.i(rightEdge), line.j(rightEdge))
-						));
-				status = curGrid;
-				cnt = 1;
-				leftEdge = i - 1;
-			}
-		}
-		rightEdge = lineSize;
-		if (isFinished && status != EMPTY && cnt == 5) *isFinished = status;
-		sum += getScore(status, cnt,
-			calculateEdgeSituation(
-				getValueAt(line.i(leftEdge), line.j(leftEdge)),
-				getValueAt(line.i(rightEdge), line.j(rightEdge))
-				));
+
+		auto lambda = [&] (ChessPiece currentPiece, int count, int position, ChessPiece leftOutOfBoundPiece, ChessPiece rightOutOfBoundPiece) {
+			sum += getScore(currentPiece, count, calculateEdgeSituation(rightOutOfBoundPiece, leftOutOfBoundPiece));
+			if (isFinished && currentPiece != EMPTY && count == 5) *isFinished = currentPiece;
+		};
+
+		grid.lambdaForTraverseChessboardLine(line, lambda);
 		return sum;
 	}
 	//评估坐标(x,y)处所对应的分数

@@ -86,12 +86,13 @@ public:
             : [value] "r" (value), [position] "rm" (position)
             : "rcx"
         );
-        if ((int64_t) position + (int64_t) leftZeroCount > 64) leftZeroCount -= 64 - bitsetSize;
-        if ((int64_t) position - (int64_t) rightZeroCount < 0) rightZeroCount -= 64 - bitsetSize;
         if (leftZeroCount == 64 && rightZeroCount == 64) {
-            if (leftOnePosition) *leftOnePosition = -1;
+            if (leftOnePosition) *leftOnePosition = bitsetSize;
             if (rightOnePosition) *rightOnePosition = -1;
             return bitsetSize;
+        } else {
+            if ((int64_t) position + (int64_t) leftZeroCount >= 64) leftZeroCount -= 64 - bitsetSize;
+            if ((int64_t) position - (int64_t) rightZeroCount < 0) rightZeroCount -= 64 - bitsetSize;
         }
         if (leftOnePosition) *leftOnePosition = (position + leftZeroCount) % bitsetSize;
         if (rightOnePosition) *rightOnePosition = (position - rightZeroCount - 1 + bitsetSize) % bitsetSize;
@@ -204,22 +205,19 @@ public:
         auto getPleceInChessboardLine = [&] (int pos) {
                 if (!grids[BOT][lineType][uniqueID][pos]) return BOT;
                 else if (!grids[PLAYER][lineType][uniqueID][pos]) return PLAYER;
-                else {
-                    assert(false);
-                    return NOT_EXIST;
-                }
+                else return NOT_EXIST;
         };
         for (uint64_t i = emptyGrids.findFirstZeroAscendingNonRotate(0); i < bitsetSize; i = emptyGrids.findFirstZeroAscendingNonRotate(i)) {
             ChessPiece currentPiece = getPleceInChessboardLine(i);
             uint64_t contiguousChessCount, leftOnePosition, rightOnePosition;
             contiguousChessCount = grids[currentPiece][lineType][uniqueID].getContiguousZeroCountNonRotate(i, &leftOnePosition, &rightOnePosition);
             ChessPiece leftOutOfBoundPiece, rightOutOfBoundPiece;
-            if (leftOnePosition == -1) leftOutOfBoundPiece = NOT_EXIST;
+            if (leftOnePosition == bitsetSize) leftOutOfBoundPiece = NOT_EXIST;
             else leftOutOfBoundPiece = getPleceInChessboardLine(leftOnePosition);
-            if (rightOnePosition == bitsetSize) rightOnePosition = NOT_EXIST;
+            if (rightOnePosition == -1) rightOnePosition = NOT_EXIST;
             else rightOutOfBoundPiece = getPleceInChessboardLine(rightOnePosition);
             lambda(currentPiece, contiguousChessCount, i, leftOutOfBoundPiece, rightOutOfBoundPiece);
-            i = rightOnePosition;
+            i = leftOnePosition;
         }
     }
 };
