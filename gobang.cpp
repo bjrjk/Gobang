@@ -129,7 +129,7 @@ struct Gobang {
 
 		auto lambda = [&] (ChessPiece currentPiece, int count, int position, ChessPiece leftOutOfBoundPiece, ChessPiece rightOutOfBoundPiece) {
 			sum += getScore(currentPiece, count, calculateEdgeSituation(rightOutOfBoundPiece, leftOutOfBoundPiece));
-			if (isFinished && currentPiece != EMPTY && count == 5) *isFinished = currentPiece;
+			if (isFinished && currentPiece != EMPTY && count >= 5) *isFinished = currentPiece;
 		};
 
 		grid.lambdaForTraverseChessboardLine(line, lambda);
