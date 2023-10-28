@@ -3,6 +3,7 @@
 #include <bitset>
 #include <cstdint>
 #include <cassert>
+#include <functional>
 #include "gobang.h"
 
 #define BitsetWithGivenSize std::bitset<BITSET_SIZE>
@@ -72,7 +73,7 @@ public:
         BitsetWithGivenSize::flip(pos);
         return *this;
     }
-    uint64_t getContiguousZeroCount(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
+    uint64_t getContiguousZeroCount(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) const {
         assert(position < bitsetSize);
         uint64_t value = this->to_ullong();
         uint64_t leftZeroCount, rightZeroCount;
@@ -96,11 +97,23 @@ public:
         if (rightOnePosition) *rightOnePosition = (position - rightZeroCount - 1 + bitsetSize) % bitsetSize;
         return leftZeroCount + rightZeroCount;
     }
-    uint64_t getContiguousZeroCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
+    uint64_t getContiguousZeroCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) const {
         getContiguousZeroCount(position, leftOnePosition, rightOnePosition);
         if (*rightOnePosition > position) *rightOnePosition = -1;
         if (*leftOnePosition < position) *leftOnePosition = bitsetSize;
         return (int64_t) *leftOnePosition - (int64_t) *rightOnePosition - 1;
+    }
+    uint64_t findFirstZeroAscendingNonRotate(uint64_t position) const {
+        uint64_t value = this->to_ullong(), trailingActualOneCount;
+        value = ~(value >> position);
+        asm volatile ( // amd64 architecture
+            "tzcntq %[value], %[trailingZeroCount]\n"
+            : [trailingZeroCount] "=r" (trailingActualOneCount)
+            : [value] "r" (value)
+        );
+        position += trailingActualOneCount;
+        if (position >= bitsetSize) position = bitsetSize;
+        return position;
     }
 };
 
@@ -180,6 +193,33 @@ public:
                 }
                 break;
             }
+        }
+    }
+    void lambdaForTraverseChessboardLine(ChessboardLine &line, std::function<void (ChessPiece, int, int, ChessPiece, ChessPiece)> const & lambda) {
+        // void lambda(ChessPiece currentPiece, int count, int position, ChessPiece leftOutOfBoundPiece, ChessPiece rightOutOfBoundPiece);
+        ChessboardLineType lineType = line.getType();
+        uint64_t uniqueID = line.getUniqueID();
+        uint64_t bitsetSize = line.size();
+        auto &emptyGrids = grids[EMPTY][lineType][uniqueID], &botGrids = grids[BOT][lineType][uniqueID], &playerGrids = grids[PLAYER][lineType][uniqueID];
+        auto getPleceInChessboardLine = [&] (int pos) {
+                if (!grids[BOT][lineType][uniqueID][pos]) return BOT;
+                else if (!grids[PLAYER][lineType][uniqueID][pos]) return PLAYER;
+                else {
+                    assert(false);
+                    return NOT_EXIST;
+                }
+        };
+        for (uint64_t i = emptyGrids.findFirstZeroAscendingNonRotate(0); i < bitsetSize; i = emptyGrids.findFirstZeroAscendingNonRotate(i)) {
+            ChessPiece currentPiece = getPleceInChessboardLine(i);
+            uint64_t contiguousChessCount, leftOnePosition, rightOnePosition;
+            contiguousChessCount = grids[currentPiece][lineType][uniqueID].getContiguousZeroCountNonRotate(i, &leftOnePosition, &rightOnePosition);
+            ChessPiece leftOutOfBoundPiece, rightOutOfBoundPiece;
+            if (leftOnePosition == -1) leftOutOfBoundPiece = NOT_EXIST;
+            else leftOutOfBoundPiece = getPleceInChessboardLine(leftOnePosition);
+            if (rightOnePosition == bitsetSize) rightOnePosition = NOT_EXIST;
+            else rightOutOfBoundPiece = getPleceInChessboardLine(rightOnePosition);
+            lambda(currentPiece, contiguousChessCount, i, leftOutOfBoundPiece, rightOutOfBoundPiece);
+            i = rightOnePosition;
         }
     }
 };

@@ -113,8 +113,33 @@ void testGetContiguousZeroCountNonRotate() {
     assert(result == 2 && leftOnePosition == 15 && rightOnePosition == 12);
 }
 
+void testFindFirstZeroAscendingNonRotate() {
+    ChessboardLineBinaryGrid<32> grid(15);
+    uint64_t result;
+
+    grid.set();
+    grid.flip(0);
+    grid.flip(1);
+    grid.flip(2);
+    grid.flip(13);
+    grid.flip(14);
+
+    result = grid.findFirstZeroAscendingNonRotate(1);
+    printf("%lld\n", result);
+    assert(result == 1);
+
+    result = grid.findFirstZeroAscendingNonRotate(14);
+    printf("%lld\n", result);
+    assert(result == 14);
+
+    result = grid.findFirstZeroAscendingNonRotate(5);
+    printf("%lld\n", result);
+    assert(result == 13);
+}
+
 int main() {
     testGetContiguousZeroCount1();
     testGetContiguousZeroCount2();
     testGetContiguousZeroCountNonRotate();
+    testFindFirstZeroAscendingNonRotate();
 }
