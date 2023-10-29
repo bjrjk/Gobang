@@ -82,7 +82,7 @@ public:
             "rorq %%cl, %[value]\n"
             "tzcntq %[value], %[leftZeroCount]\n"
             "lzcntq %[value], %[rightZeroCount]\n"
-            : [leftZeroCount] "=r" (leftZeroCount), [rightZeroCount] "=r" (rightZeroCount)
+            : [leftZeroCount] "=&r" (leftZeroCount), [rightZeroCount] "=&r" (rightZeroCount)
             : [value] "r" (value), [position] "rm" (position)
             : "rcx"
         );
