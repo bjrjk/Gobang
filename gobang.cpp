@@ -21,10 +21,6 @@ constexpr int SCORE_LENGTH = 6; //Score*数组的长度
 constexpr int SHIFT_LENGTH = 8; //*Shift数组的长度
 static bool restrictedMove = false; //是否有禁手
 
-struct Position { //用来返回落子位置的数据结构
-	int x, y;
-};
-
 int PositionNodeSortMethod = 0; //启发式评估用到的排序方式指示变量
 struct PositionNode { //使用启发式评估对搜索落子顺序进行调整，从而便于α-β剪枝的数据结构
 	int x, y; //落子坐标位置
@@ -181,7 +177,7 @@ struct Gobang {
 	}
 	//极大极小搜索与α-β剪枝搜索函数
 	//参数为当前搜索深度depth，返回的落子位置数据结构movePos，α值alpha，β值beta，棋局评估分数evaluationValue
-	long long minimaxSearch(int depth, Position* movePos, long long alpha, long long beta, long long evaluationValue) {
+	long long minimaxSearch(int depth, ChessPosition* movePos, long long alpha, long long beta, long long evaluationValue) {
 		//depth%2==0时为BOT，depth%2==1时为PLAYER
 		if (depth == DEPTH) //到达边界深度时，结束搜索，直接返回棋局评估分数
 			return evaluationValue;
@@ -255,7 +251,7 @@ struct Gobang {
 	//选择落子位置的函数
 	inline Json::Value ChoosePosition(int cnter)
 	{
-		Position move;
+		ChessPosition move;
 		Json::Value action;
 		memset(unitDiffStorageValid, false, sizeof(unitDiffStorageValid));
 		if (cnter != 0) { //机器人后手的情况

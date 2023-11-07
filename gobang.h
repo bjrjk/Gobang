@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <algorithm>
 
 constexpr int SIZE = 15; //棋盘边长
@@ -20,6 +21,12 @@ enum ChessboardLineType {
 	ULLRDiagonal, // 左上右下对角线 Upper Left - Lower Right
 	LLURDiagonal, // 左下右上对角线 Lower Left - Upper Right
 	LINE_TYPE_END = LLURDiagonal
+};
+
+struct ChessPosition { //用来表示棋子位置的数据结构
+	int x, y;
+	ChessPosition(int x, int y): x(x), y(y) {}
+	ChessPosition(): ChessPosition(0, 0) {}
 };
 
 class ChessboardLine {
@@ -156,4 +163,14 @@ public:
 		assert(false);
 		return NOT_EXIST;
 	}
+};
+
+struct SingleChessChainStatus {
+	// Input
+	const ChessPiece chessType;
+	const ChessPosition dropPosition;
+	const ChessboardLineType lineType;
+	// Output
+	ChessboardLine chessboardLine;
+	// TODO
 };

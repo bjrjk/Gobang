@@ -17,6 +17,17 @@ private:
     inline void clearHighBits() {
         if (bitsetSize < BITSET_SIZE) *this &= (1ULL << bitsetSize) - 1;
     }
+    static uint64_t countOnesForRawValue(uint64_t value, int start = 0, int end = 63) const { // [start, end] in range [0, 63]
+        uint64_t mask, result;
+        if (end - start + 1 == 64) mask = -1;
+        else mask = (1ull << (end - start + 1) - 1) << start;
+        asm volatile (
+            "popcnt %[maskedValue], %[result]\n"
+            : [result] "=r" (result)
+            : [maskedValue] "r" (value & mask)
+        );
+        return result;
+    }
 public:
     // Initialized with all bits set
     ChessboardLineBinaryGrid(uint64_t bitsetSize = BITSET_SIZE)
@@ -104,6 +115,13 @@ public:
         if (*leftOnePosition < position) *leftOnePosition = bitsetSize;
         return (int64_t) *leftOnePosition - (int64_t) *rightOnePosition - 1;
     }
+    uint64_t getContiguousOneCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
+        uint64_t result;
+        this->flip();
+        result = getContiguousZeroCountNonRotate(position, leftOnePosition, rightOnePosition);
+        this->flip();
+        return result;
+    }
     uint64_t findFirstZeroAscendingNonRotate(uint64_t position) const {
         uint64_t value = this->to_ullong(), trailingActualOneCount;
         value = ~(value >> position);
@@ -115,6 +133,14 @@ public:
         position += trailingActualOneCount;
         if (position >= bitsetSize) position = bitsetSize;
         return position;
+    }
+    uint64_t countOnes(int start = 0, int end = 63) const {
+        uint64_t value = this->to_ullong();
+        return this->countOnesForRawValue(value, start, end);
+    }
+    uint64_t countZeros(int start = 0, int end = 63) const {
+        uint64_t value = this->to_ullong();
+        return this->countOnesForRawValue(~value, start, end);
     }
 };
 
