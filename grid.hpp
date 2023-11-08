@@ -84,8 +84,14 @@ public:
         BitsetWithGivenSize::flip(pos);
         return *this;
     }
+    // Left indicate maximum index (63); Right indicate minimum index (0).
     uint64_t getContiguousZeroCount(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) const {
         assert(position < bitsetSize);
+        if (*this[position]) {
+            if (leftOnePosition) *leftOnePosition = position + 1;
+            if (rightOnePosition) *rightOnePosition = position;
+            return 0;
+        }
         uint64_t value = this->to_ullong();
         uint64_t leftZeroCount, rightZeroCount;
         asm volatile ( // amd64 architecture
@@ -115,10 +121,10 @@ public:
         if (*leftOnePosition < position) *leftOnePosition = bitsetSize;
         return (int64_t) *leftOnePosition - (int64_t) *rightOnePosition - 1;
     }
-    uint64_t getContiguousOneCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) {
+    uint64_t getContiguousOneCountNonRotate(uint64_t position, uint64_t * leftZeroPosition = NULL, uint64_t * rightZeroPosition = NULL) {
         uint64_t result;
         this->flip();
-        result = getContiguousZeroCountNonRotate(position, leftOnePosition, rightOnePosition);
+        result = getContiguousZeroCountNonRotate(position, leftZeroPosition, rightZeroPosition);
         this->flip();
         return result;
     }
@@ -135,10 +141,12 @@ public:
         return position;
     }
     uint64_t countOnes(int start = 0, int end = 63) const {
+        assert(start <= end);
         uint64_t value = this->to_ullong();
         return this->countOnesForRawValue(value, start, end);
     }
     uint64_t countZeros(int start = 0, int end = 63) const {
+        assert(start <= end);
         uint64_t value = this->to_ullong();
         return this->countOnesForRawValue(~value, start, end);
     }
@@ -245,5 +253,25 @@ public:
             lambda(currentPiece, contiguousChessCount, i, leftOutOfBoundPiece, rightOutOfBoundPiece);
             i = leftOnePosition;
         }
+    }
+    void getSingleChessChainStatus(SingleChessChainStatus * status) {
+        assert(status);
+        assert(status->chessType == BOT || status->chessType == PLAYER);
+        assert(this->get(status->dropPosition.x, status->dropPosition.y) == status->chessType);
+        uint64_t lineUniqueID = status->chessboardLine.getUniqueID();
+        uint64_t chessIndex = status->chessboardLine.getIndex(status->dropPosition.x, status->dropPosition.y);
+        auto &emptyGrids = grids[EMPTY][status->lineType][lineUniqueID],
+            &selfGrids = grids[status->chessType][status->lineType][lineUniqueID],
+            &adversaryGrids = grids[ChessPieceAdversaryMapper[status->chessType]][status->lineType][lineUniqueID];
+        adversaryGrids.getContiguousOneCountNonRotate(chessIndex,
+            reinterpret_cast<uint64_t *>(&status->adversaryLeftAdjacentIndex),
+            reinterpret_cast<uint64_t *>(&status->adversaryRightAdjacentIndex)
+        );
+        assert(status->adversaryLeftAdjacentIndex - 1 >= 0 && status->adversaryRightAdjacentIndex + 1 < emptyGrids.size());
+        emptyGrids.getContiguousOneCountNonRotate(status->adversaryLeftAdjacentIndex - 1, NULL, reinterpret_cast<uint64_t *>(&status->selfLeftmostIndex));
+        if (emptyGrids.getContiguousOneCountNonRotate(status->adversaryRightAdjacentIndex + 1, reinterpret_cast<uint64_t *>(&status->selfRightmostIndex), NULL) == 0)
+            status->selfRightmostIndex = status->adversaryRightAdjacentIndex + 1;
+        assert(emptyGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex) == selfGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex));
+        status->selfChessCount = selfGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex);
     }
 };

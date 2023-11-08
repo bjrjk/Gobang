@@ -15,6 +15,12 @@ enum ChessPiece {
 	PIECE_END = PLAYER
 };
 
+const ChessPiece ChessPieceAdversaryMapper[] = {
+	NOT_EXIST,
+	PLAYER,
+	BOT
+};
+
 enum ChessboardLineType {
 	LINE, // 行
 	ROW, // 列
@@ -167,10 +173,14 @@ public:
 
 struct SingleChessChainStatus {
 	// Input
-	const ChessPiece chessType;
-	const ChessPosition dropPosition;
-	const ChessboardLineType lineType;
+	const ChessPiece chessType; // 所查找的（我方）棋子类型
+	const ChessPosition dropPosition; // 我方落子的位置
+	const ChessboardLineType lineType; // 查找的棋盘线方向
 	// Output
-	ChessboardLine chessboardLine;
-	// TODO
+	ChessboardLine chessboardLine; // 棋盘线数据结构
+	int64_t selfLeftmostIndex, selfRightmostIndex; // 以我方落子的位置为中心，我方连续棋子的最左、右侧位置。该连续可以不是紧密连续，中间可以有空位，但是不能被对方棋子所插入
+	uint64_t selfChessCount; // 我方连续棋子的个数
+	int64_t adversaryLeftAdjacentIndex, adversaryRightAdjacentIndex; // 超出我方连续棋子外的、与我方连续棋子最近的对方棋子的左右侧位置
+	SingleChessChainStatus(ChessPiece chessType, ChessPosition dropPosition, ChessboardLineType lineType):
+		chessType(chessType), dropPosition(dropPosition), lineType(lineType), chessboardLine(lineType, dropPosition.x, dropPosition.y) {}
 };
