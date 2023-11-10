@@ -262,7 +262,7 @@ public:
     void getSingleChessChainStatus(SingleChessChainStatus * status) {
         assert(status);
         assert(status->chessType == BOT || status->chessType == PLAYER);
-        assert(this->get(status->dropPosition.x, status->dropPosition.y) == status->chessType);
+        assert(this->get(status->dropPosition.x, status->dropPosition.y) != ChessPieceAdversaryMapper[status->chessType]);
         uint64_t lineUniqueID = status->chessboardLine.getUniqueID();
         uint64_t chessIndex = status->chessboardLine.getIndex(status->dropPosition.x, status->dropPosition.y);
         auto &emptyGrids = grids[EMPTY][status->lineType][lineUniqueID],

@@ -153,10 +153,61 @@ void testGetSingleChessChainStatus1() {
         status.adversaryRightAdjacentIndex == 2 && status.adversaryLeftAdjacentIndex == 9);
 }
 
+void testGetSingleChessChainStatus2() {
+    ChessboardGrid grid;
+    SingleChessChainStatus status(BOT, ChessPosition(0, 6), LINE);
+    grid.set(0, 5, BOT);
+    grid.set(0, 6, BOT);
+    grid.set(0, 14, BOT);
+    grid.getSingleChessChainStatus(&status);
+    printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
+        status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
+    assert(status.selfRightmostIndex == 5 && status.selfLeftmostIndex == 14 &&
+        status.selfChessCount == 3 &&
+        status.adversaryRightAdjacentIndex == -1 && status.adversaryLeftAdjacentIndex == 15);
+}
+
+void testGetSingleChessChainStatus3() {
+    ChessboardGrid grid;
+    SingleChessChainStatus status(PLAYER, ChessPosition(6, 0), ROW);
+    grid.set(4, 0, BOT);
+    grid.set(5, 0, PLAYER);
+    grid.set(6, 0, PLAYER);
+    grid.set(7, 0, PLAYER);
+    grid.set(8, 0, BOT);
+    grid.getSingleChessChainStatus(&status);
+    printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
+        status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
+    assert(status.selfRightmostIndex == 5 && status.selfLeftmostIndex == 7 &&
+        status.selfChessCount == 3 &&
+        status.adversaryRightAdjacentIndex == 4 && status.adversaryLeftAdjacentIndex == 8);
+}
+
+void testGetSingleChessChainStatus4() {
+    ChessboardGrid grid;
+    SingleChessChainStatus status(PLAYER, ChessPosition(7, 7), ULLRDiagonal);
+    grid.set(0, 0, BOT);
+    grid.set(1, 1, PLAYER);
+    grid.set(2, 2, PLAYER);
+    grid.set(3, 3, PLAYER);
+    grid.set(5, 5, PLAYER);
+    grid.set(8, 8, BOT);
+    grid.set(14, 14, BOT);
+    grid.getSingleChessChainStatus(&status);
+    printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
+        status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
+    assert(status.selfRightmostIndex == 1 && status.selfLeftmostIndex == 5 &&
+        status.selfChessCount == 4 &&
+        status.adversaryRightAdjacentIndex == 0 && status.adversaryLeftAdjacentIndex == 8);
+}
+
 int main() {
     testGetContiguousZeroCount1();
     testGetContiguousZeroCount2();
     testGetContiguousZeroCountNonRotate();
     testFindFirstZeroAscendingNonRotate();
     testGetSingleChessChainStatus1();
+    testGetSingleChessChainStatus2();
+    testGetSingleChessChainStatus3();
+    testGetSingleChessChainStatus4();
 }
