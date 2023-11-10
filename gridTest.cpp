@@ -137,9 +137,26 @@ void testFindFirstZeroAscendingNonRotate() {
     assert(result == 13);
 }
 
+void testGetSingleChessChainStatus1() {
+    ChessboardGrid grid;
+    SingleChessChainStatus status(BOT, ChessPosition(0, 6), LINE);
+    grid.set(0, 2, PLAYER);
+    grid.set(0, 4, BOT);
+    grid.set(0, 6, BOT);
+    grid.set(0, 7, BOT);
+    grid.set(0, 9, PLAYER);
+    grid.getSingleChessChainStatus(&status);
+    printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
+        status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
+    assert(status.selfRightmostIndex == 4 && status.selfLeftmostIndex == 7 &&
+        status.selfChessCount == 3 &&
+        status.adversaryRightAdjacentIndex == 2 && status.adversaryLeftAdjacentIndex == 9);
+}
+
 int main() {
     testGetContiguousZeroCount1();
     testGetContiguousZeroCount2();
     testGetContiguousZeroCountNonRotate();
     testFindFirstZeroAscendingNonRotate();
+    testGetSingleChessChainStatus1();
 }

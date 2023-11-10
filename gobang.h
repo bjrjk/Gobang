@@ -178,7 +178,7 @@ struct SingleChessChainStatus {
 	const ChessboardLineType lineType; // 查找的棋盘线方向
 	// Output
 	ChessboardLine chessboardLine; // 棋盘线数据结构
-	int64_t selfLeftmostIndex, selfRightmostIndex; // 以我方落子的位置为中心，我方连续棋子的最左、右侧位置。该连续可以不是紧密连续，中间可以有空位，但是不能被对方棋子所插入
+	int64_t selfLeftmostIndex, selfRightmostIndex; // 以我方落子的位置为中心，我方连续棋子的最高、最低位置。该连续可以不是紧密连续，中间可以有空位，但是不能被对方棋子所插入
 	uint64_t selfChessCount; // 我方连续棋子的个数
 	int64_t adversaryLeftAdjacentIndex, adversaryRightAdjacentIndex; // 超出我方连续棋子外的、与我方连续棋子最近的对方棋子的左右侧位置
 	SingleChessChainStatus(ChessPiece chessType, ChessPosition dropPosition, ChessboardLineType lineType):

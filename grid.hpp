@@ -17,10 +17,10 @@ private:
     inline void clearHighBits() {
         if (bitsetSize < BITSET_SIZE) *this &= (1ULL << bitsetSize) - 1;
     }
-    static uint64_t countOnesForRawValue(uint64_t value, int start = 0, int end = 63) const { // [start, end] in range [0, 63]
+    static uint64_t countOnesForRawValue(uint64_t value, int start = 0, int end = 63) { // [start, end] in range [0, 63]
         uint64_t mask, result;
         if (end - start + 1 == 64) mask = -1;
-        else mask = (1ull << (end - start + 1) - 1) << start;
+        else mask = ((1ull << (end - start + 1)) - 1) << start;
         asm volatile (
             "popcnt %[maskedValue], %[result]\n"
             : [result] "=r" (result)
@@ -87,7 +87,7 @@ public:
     // Left indicate maximum index (63); Right indicate minimum index (0).
     uint64_t getContiguousZeroCount(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) const {
         assert(position < bitsetSize);
-        if (*this[position]) {
+        if ((*this)[position]) {
             if (leftOnePosition) *leftOnePosition = position + 1;
             if (rightOnePosition) *rightOnePosition = position;
             return 0;
@@ -116,10 +116,13 @@ public:
         return leftZeroCount + rightZeroCount;
     }
     uint64_t getContiguousZeroCountNonRotate(uint64_t position, uint64_t * leftOnePosition = NULL, uint64_t * rightOnePosition = NULL) const {
-        getContiguousZeroCount(position, leftOnePosition, rightOnePosition);
-        if (*rightOnePosition > position) *rightOnePosition = -1;
-        if (*leftOnePosition < position) *leftOnePosition = bitsetSize;
-        return (int64_t) *leftOnePosition - (int64_t) *rightOnePosition - 1;
+        uint64_t leftOnePositionValue, rightOnePositionValue;
+        getContiguousZeroCount(position, &leftOnePositionValue, &rightOnePositionValue);
+        if (rightOnePositionValue > position) rightOnePositionValue = -1;
+        if (leftOnePositionValue < position) leftOnePositionValue = bitsetSize;
+        if (leftOnePosition) *leftOnePosition = leftOnePositionValue;
+        if (rightOnePosition) *rightOnePosition = rightOnePositionValue;
+        return (int64_t) leftOnePositionValue - (int64_t) rightOnePositionValue - 1;
     }
     uint64_t getContiguousOneCountNonRotate(uint64_t position, uint64_t * leftZeroPosition = NULL, uint64_t * rightZeroPosition = NULL) {
         uint64_t result;
@@ -228,6 +231,8 @@ public:
                 }
                 break;
             }
+            default:
+                break;
         }
     }
     void lambdaForTraverseChessboardLine(ChessboardLine &line, std::function<void (ChessPiece, int, int, ChessPiece, ChessPiece)> const & lambda) {
