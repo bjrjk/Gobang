@@ -13,8 +13,19 @@ enum class ForbiddenChessChainType {
 class ForbiddenMoveJudger {
 private:
     ChessboardGrid & grid;
-    ForbiddenChessChainType isAnyForbiddenChessChain(SingleChessChainStatus &);
 public:
     ForbiddenMoveJudger(ChessboardGrid & grid): grid(grid) {}
     bool isForbiddenMove(ChessPiece, int, int);
+    ForbiddenChessChainType isAnyForbiddenChessChain(SingleChessChainStatus &);
+    ForbiddenChessChainType AliveThreeJudger();
+    ForbiddenChessChainType AliveFourJudger();
+    ForbiddenChessChainType OneSideBlockingFourJudger();
+    ForbiddenChessChainType LongContiguousJudger();
+    constexpr static ForbiddenChessChainType (ForbiddenMoveJudger::*const ForbiddenChessChainJudger[])() = {
+        nullptr,
+        &ForbiddenMoveJudger::AliveThreeJudger,
+        &ForbiddenMoveJudger::AliveFourJudger,
+        &ForbiddenMoveJudger::OneSideBlockingFourJudger,
+        &ForbiddenMoveJudger::LongContiguousJudger
+    };
 };

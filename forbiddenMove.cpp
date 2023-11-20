@@ -1,21 +1,8 @@
 #include <algorithm>
 #include "forbiddenMove.h"
 
-static bool AliveThreeJudger();
-static bool AliveFourJudger();
-static bool OneSideBlockingFourJudger();
-static bool LongContiguousJudger();
-
-static bool (*ForbiddenChessChainJudger[])() = {
-    nullptr,
-    AliveThreeJudger,
-    AliveFourJudger,
-    OneSideBlockingFourJudger,
-    LongContiguousJudger
-};
-
 ForbiddenChessChainType ForbiddenMoveJudger::isAnyForbiddenChessChain(SingleChessChainStatus & status) {
-
+    return ForbiddenChessChainType::None;
 }
 
 bool ForbiddenMoveJudger::isForbiddenMove(ChessPiece piece, int x, int y) {
@@ -29,9 +16,21 @@ bool ForbiddenMoveJudger::isForbiddenMove(ChessPiece piece, int x, int y) {
     ForbiddenChessChainType forbiddenChessChainType4DifferentDirections[ChessChainNumber];
     for (int i = 0; i < ChessChainNumber; i++)
         forbiddenChessChainType4DifferentDirections[i] = isAnyForbiddenChessChain(multipleDirectionChessChainStatus[i]);
-    unsigned aliveThreeCount = std::count_if(forbiddenChessChainType4DifferentDirections,
-        forbiddenChessChainType4DifferentDirections + ChessChainNumber,
-        [](ForbiddenChessChainType type) { type == ForbiddenChessChainType::AliveThree;}
-    );
 
+#define CheckForbiddenChessChain(TYPE, COUNT, CONDITION) \
+        do { \
+            unsigned TYPE##Count = std::count_if(forbiddenChessChainType4DifferentDirections, \
+                forbiddenChessChainType4DifferentDirections + ChessChainNumber, \
+                [](ForbiddenChessChainType type) { return (CONDITION); } \
+            ); \
+            if (TYPE##Count >= COUNT) return true; \
+        } while(0)
+
+    CheckForbiddenChessChain(Three, 2, type == ForbiddenChessChainType::AliveThree);
+    CheckForbiddenChessChain(Four, 2, type == ForbiddenChessChainType::AliveFour || type == ForbiddenChessChainType::OneSideBlockingFour);
+    CheckForbiddenChessChain(Long, 1, type == ForbiddenChessChainType::LongContiguous);
+
+#undef CheckForbiddenChessChain
+
+    return false;
 }
