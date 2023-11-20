@@ -259,24 +259,23 @@ public:
             i = leftOnePosition;
         }
     }
-    void getSingleChessChainStatus(SingleChessChainStatus * status) {
-        assert(status);
-        assert(status->chessType == BOT || status->chessType == PLAYER);
-        assert(this->get(status->dropPosition.x, status->dropPosition.y) != ChessPieceAdversaryMapper[status->chessType]);
-        uint64_t lineUniqueID = status->chessboardLine.getUniqueID();
-        uint64_t chessIndex = status->chessboardLine.getIndex(status->dropPosition.x, status->dropPosition.y);
-        auto &emptyGrids = grids[EMPTY][status->lineType][lineUniqueID],
-            &selfGrids = grids[status->chessType][status->lineType][lineUniqueID],
-            &adversaryGrids = grids[ChessPieceAdversaryMapper[status->chessType]][status->lineType][lineUniqueID];
+    void getSingleChessChainStatus(SingleChessChainStatus & status) {
+        assert(status.chessType == BOT || status.chessType == PLAYER);
+        assert(this->get(status.dropPosition.x, status.dropPosition.y) != ChessPieceAdversaryMapper[status.chessType]);
+        uint64_t lineUniqueID = status.chessboardLine.getUniqueID();
+        uint64_t chessIndex = status.chessboardLine.getIndex(status.dropPosition.x, status.dropPosition.y);
+        auto &emptyGrids = grids[EMPTY][status.lineType][lineUniqueID],
+            &selfGrids = grids[status.chessType][status.lineType][lineUniqueID],
+            &adversaryGrids = grids[ChessPieceAdversaryMapper[status.chessType]][status.lineType][lineUniqueID];
         adversaryGrids.getContiguousOneCountNonRotate(chessIndex,
-            reinterpret_cast<uint64_t *>(&status->adversaryLeftAdjacentIndex),
-            reinterpret_cast<uint64_t *>(&status->adversaryRightAdjacentIndex)
+            reinterpret_cast<uint64_t *>(&status.adversaryLeftAdjacentIndex),
+            reinterpret_cast<uint64_t *>(&status.adversaryRightAdjacentIndex)
         );
-        assert(status->adversaryLeftAdjacentIndex - 1 >= 0 && status->adversaryRightAdjacentIndex + 1 < emptyGrids.size());
-        emptyGrids.getContiguousOneCountNonRotate(status->adversaryLeftAdjacentIndex - 1, NULL, reinterpret_cast<uint64_t *>(&status->selfLeftmostIndex));
-        if (emptyGrids.getContiguousOneCountNonRotate(status->adversaryRightAdjacentIndex + 1, reinterpret_cast<uint64_t *>(&status->selfRightmostIndex), NULL) == 0)
-            status->selfRightmostIndex = status->adversaryRightAdjacentIndex + 1;
-        assert(emptyGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex) == selfGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex));
-        status->selfChessCount = selfGrids.countZeros(status->selfRightmostIndex, status->selfLeftmostIndex);
+        assert(status.adversaryLeftAdjacentIndex - 1 >= 0 && status.adversaryRightAdjacentIndex + 1 < emptyGrids.size());
+        emptyGrids.getContiguousOneCountNonRotate(status.adversaryLeftAdjacentIndex - 1, NULL, reinterpret_cast<uint64_t *>(&status.selfLeftmostIndex));
+        if (emptyGrids.getContiguousOneCountNonRotate(status.adversaryRightAdjacentIndex + 1, reinterpret_cast<uint64_t *>(&status.selfRightmostIndex), NULL) == 0)
+            status.selfRightmostIndex = status.adversaryRightAdjacentIndex + 1;
+        assert(emptyGrids.countZeros(status.selfRightmostIndex, status.selfLeftmostIndex) == selfGrids.countZeros(status.selfRightmostIndex, status.selfLeftmostIndex));
+        status.selfChessCount = selfGrids.countZeros(status.selfRightmostIndex, status.selfLeftmostIndex);
     }
 };

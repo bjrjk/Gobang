@@ -145,7 +145,7 @@ void testGetSingleChessChainStatus1() {
     grid.set(0, 6, BOT);
     grid.set(0, 7, BOT);
     grid.set(0, 9, PLAYER);
-    grid.getSingleChessChainStatus(&status);
+    grid.getSingleChessChainStatus(status);
     printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
         status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
     assert(status.selfRightmostIndex == 4 && status.selfLeftmostIndex == 7 &&
@@ -159,7 +159,7 @@ void testGetSingleChessChainStatus2() {
     grid.set(0, 5, BOT);
     grid.set(0, 6, BOT);
     grid.set(0, 14, BOT);
-    grid.getSingleChessChainStatus(&status);
+    grid.getSingleChessChainStatus(status);
     printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
         status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
     assert(status.selfRightmostIndex == 5 && status.selfLeftmostIndex == 14 &&
@@ -175,7 +175,7 @@ void testGetSingleChessChainStatus3() {
     grid.set(6, 0, PLAYER);
     grid.set(7, 0, PLAYER);
     grid.set(8, 0, BOT);
-    grid.getSingleChessChainStatus(&status);
+    grid.getSingleChessChainStatus(status);
     printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
         status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
     assert(status.selfRightmostIndex == 5 && status.selfLeftmostIndex == 7 &&
@@ -193,7 +193,7 @@ void testGetSingleChessChainStatus4() {
     grid.set(5, 5, PLAYER);
     grid.set(8, 8, BOT);
     grid.set(14, 14, BOT);
-    grid.getSingleChessChainStatus(&status);
+    grid.getSingleChessChainStatus(status);
     printf("%lld %lld %lld %lld %lld\n", status.selfRightmostIndex, status.selfLeftmostIndex, status.selfChessCount,
         status.adversaryRightAdjacentIndex, status.adversaryLeftAdjacentIndex);
     assert(status.selfRightmostIndex == 1 && status.selfLeftmostIndex == 5 &&
