@@ -16,10 +16,10 @@ ForbiddenChessChainType ForbiddenMoveJudger::isAnyForbiddenChessChain(SingleChes
 bool ForbiddenMoveJudger::isForbiddenMove(ChessPiece piece, int x, int y) {
     constexpr int ChessChainNumber = 4;
     SingleChessChainStatus multipleDirectionChessChainStatus[ChessChainNumber] = {
-        SingleChessChainStatus(piece, ChessPosition(x, y), LINE),
-        SingleChessChainStatus(piece, ChessPosition(x, y), ROW),
-        SingleChessChainStatus(piece, ChessPosition(x, y), ULLRDiagonal),
-        SingleChessChainStatus(piece, ChessPosition(x, y), LLURDiagonal)
+        SingleChessChainStatus(piece, ChessPosition(x, y), ChessboardLineType::LINE),
+        SingleChessChainStatus(piece, ChessPosition(x, y), ChessboardLineType::ROW),
+        SingleChessChainStatus(piece, ChessPosition(x, y), ChessboardLineType::ULLRDiagonal),
+        SingleChessChainStatus(piece, ChessPosition(x, y), ChessboardLineType::LLURDiagonal)
     };
     ForbiddenChessChainType forbiddenChessChainType4DifferentDirections[ChessChainNumber];
     assert(grid.get(x, y) == EMPTY);

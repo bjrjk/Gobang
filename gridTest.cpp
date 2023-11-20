@@ -139,7 +139,7 @@ void testFindFirstZeroAscendingNonRotate() {
 
 void testGetSingleChessChainStatus1() {
     ChessboardGrid grid;
-    SingleChessChainStatus status(BOT, ChessPosition(0, 6), LINE);
+    SingleChessChainStatus status(BOT, ChessPosition(0, 6), ChessboardLineType::LINE);
     grid.set(0, 2, PLAYER);
     grid.set(0, 4, BOT);
     grid.set(0, 6, BOT);
@@ -155,7 +155,7 @@ void testGetSingleChessChainStatus1() {
 
 void testGetSingleChessChainStatus2() {
     ChessboardGrid grid;
-    SingleChessChainStatus status(BOT, ChessPosition(0, 6), LINE);
+    SingleChessChainStatus status(BOT, ChessPosition(0, 6), ChessboardLineType::LINE);
     grid.set(0, 5, BOT);
     grid.set(0, 6, BOT);
     grid.set(0, 14, BOT);
@@ -169,7 +169,7 @@ void testGetSingleChessChainStatus2() {
 
 void testGetSingleChessChainStatus3() {
     ChessboardGrid grid;
-    SingleChessChainStatus status(PLAYER, ChessPosition(6, 0), ROW);
+    SingleChessChainStatus status(PLAYER, ChessPosition(6, 0), ChessboardLineType::ROW);
     grid.set(4, 0, BOT);
     grid.set(5, 0, PLAYER);
     grid.set(6, 0, PLAYER);
@@ -185,7 +185,7 @@ void testGetSingleChessChainStatus3() {
 
 void testGetSingleChessChainStatus4() {
     ChessboardGrid grid;
-    SingleChessChainStatus status(PLAYER, ChessPosition(7, 7), ULLRDiagonal);
+    SingleChessChainStatus status(PLAYER, ChessPosition(7, 7), ChessboardLineType::ULLRDiagonal);
     grid.set(0, 0, BOT);
     grid.set(1, 1, PLAYER);
     grid.set(2, 2, PLAYER);

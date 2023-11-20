@@ -1,9 +1,13 @@
 #pragma once
 #include <cassert>
+#include <cstdint>
 #include <algorithm>
 
 constexpr int SIZE = 15; //棋盘边长
 constexpr int DIAGONAL_SIZE = 29; //棋盘单向对角线个数
+
+#define SIZEOF_ENUMCLASS(CLASS) (static_cast<uint32_t>(CLASS::SIZE))
+#define C2MI(VALUE) (static_cast<int>(VALUE)) // Cast to machine int
 
 //二维数组中的数值代表棋盘中摆放的棋子，每种数值代表一种棋子
 enum ChessPiece {
@@ -21,12 +25,12 @@ const ChessPiece ChessPieceAdversaryMapper[] = {
 	BOT
 };
 
-enum ChessboardLineType {
+enum class ChessboardLineType {
 	LINE, // 行
 	ROW, // 列
 	ULLRDiagonal, // 左上右下对角线 Upper Left - Lower Right
 	LLURDiagonal, // 左下右上对角线 Lower Left - Upper Right
-	LINE_TYPE_END = LLURDiagonal
+	SIZE
 };
 
 struct ChessPosition { //用来表示棋子位置的数据结构
@@ -42,49 +46,51 @@ class ChessboardLine {
 public:
 	ChessboardLine(ChessboardLineType type, int x, int y): type(type) {
 		switch (type) {
-			case LINE: {
+			case ChessboardLineType::LINE: {
 				this->x = x;
 				this->y = 0;
 				break;
 			}
-			case ROW: {
+			case ChessboardLineType::ROW: {
 				this->x = 0;
 				this->y = y;
 				break;
 			}
-			case ULLRDiagonal: {
+			case ChessboardLineType::ULLRDiagonal: {
 				int shift = std::min(x, y);
 				this->x = x - shift;
 				this->y = y - shift;
 				break;
 			}
-			case LLURDiagonal: {
+			case ChessboardLineType::LLURDiagonal: {
 				int shift = std::min(SIZE - 1 - x, y);
 				this->x = x + shift;
 				this->y = y - shift;
 				break;
 			}
+			default: break;
 		}
 		_size = NOT_EXIST;
 	}
 	inline uint64_t getUniqueID() const {
 		switch (type) {
-			case LINE:
+			case ChessboardLineType::LINE:
 			{
 				return this->x;
 			}
-			case ROW:
+			case ChessboardLineType::ROW:
 			{
 				return this->y;
 			}
-			case ULLRDiagonal:
+			case ChessboardLineType::ULLRDiagonal:
 			{
 				return (!this->x) * (SIZE - 1 - this->y) + (!!this->x) * (SIZE - 1 + this->x);
 			}
-			case LLURDiagonal:
+			case ChessboardLineType::LLURDiagonal:
 			{
 				return this->x + this->y;
 			}
+			default: break;
 		}
 		assert(false);
 		return NOT_EXIST;
@@ -95,76 +101,80 @@ public:
 	int size() {
 		if (_size != NOT_EXIST) return _size;
 		switch (type) {
-			case LINE:
-			case ROW: {
+			case ChessboardLineType::LINE:
+			case ChessboardLineType::ROW: {
 				return _size = SIZE;
 			}
-			case ULLRDiagonal: {
+			case ChessboardLineType::ULLRDiagonal: {
 				return _size = std::min(SIZE - x, SIZE - y);
 			}
-			case LLURDiagonal: {
+			case ChessboardLineType::LLURDiagonal: {
 				if (y == 0)
 					return _size = x + 1;
 				else // x == SIZE
 					return _size = SIZE - y;
 			}
+			default: break;
 		}
 		assert(false);
 		return NOT_EXIST;
 	}
 	int i(int index) const {
 		switch (type) {
-			case LINE: {
+			case ChessboardLineType::LINE: {
 				return x;
 			}
-			case ROW: {
+			case ChessboardLineType::ROW: {
 				return index;
 			}
-			case ULLRDiagonal: {
+			case ChessboardLineType::ULLRDiagonal: {
 				return x + index;
 			}
-			case LLURDiagonal: {
+			case ChessboardLineType::LLURDiagonal: {
 				return x - index;
 			}
+			default: break;
 		}
 		assert(false);
 		return NOT_EXIST;
 	}
 	int j(int index) const {
 		switch (type) {
-			case LINE: {
+			case ChessboardLineType::LINE: {
 				return index;
 			}
-			case ROW: {
+			case ChessboardLineType::ROW: {
 				return y;
 			}
-			case ULLRDiagonal:
-			case LLURDiagonal:
+			case ChessboardLineType::ULLRDiagonal:
+			case ChessboardLineType::LLURDiagonal:
 			{
 				return y + index;
 			}
+			default: break;
 		}
 		assert(false);
 		return NOT_EXIST;
 	}
 	int getIndex(int i, int j) const {
 		switch (type) {
-			case LINE: {
+			case ChessboardLineType::LINE: {
 				assert(this->x == i);
 				return j;
 			}
-			case ROW: {
+			case ChessboardLineType::ROW: {
 				assert(this->y == j);
 				return i;
 			}
-			case ULLRDiagonal: {
+			case ChessboardLineType::ULLRDiagonal: {
 				assert(i - this->x == j - this->y);
 				return j - this->y;
 			}
-			case LLURDiagonal: {
+			case ChessboardLineType::LLURDiagonal: {
 				assert(this->x - i == j - this->y);
 				return j - this->y;
 			}
+			default: break;
 		}
 		assert(false);
 		return NOT_EXIST;

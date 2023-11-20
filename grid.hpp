@@ -171,62 +171,62 @@ private:
         0 is placed, 1 is unplaced.
     */
 
-    ChessboardLineBinaryGrid<SIZE> grids[PIECE_END + 1][LINE_TYPE_END + 1][DIAGONAL_SIZE];
+    ChessboardLineBinaryGrid<SIZE> grids[PIECE_END + 1][SIZEOF_ENUMCLASS(ChessboardLineType)][DIAGONAL_SIZE];
 public:
     ChessboardGrid() {
         for (int k = EMPTY; k <= PIECE_END; k++) {
             for (int i = 0; i < SIZE; i++) {
-                grids[k][ULLRDiagonal][i].resizeAndSet(i + 1);
-                grids[k][ULLRDiagonal][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
-                grids[k][LLURDiagonal][i].resizeAndSet(i + 1);
-                grids[k][LLURDiagonal][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
+                grids[k][C2MI(ChessboardLineType::ULLRDiagonal)][i].resizeAndSet(i + 1);
+                grids[k][C2MI(ChessboardLineType::ULLRDiagonal)][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
+                grids[k][C2MI(ChessboardLineType::LLURDiagonal)][i].resizeAndSet(i + 1);
+                grids[k][C2MI(ChessboardLineType::LLURDiagonal)][DIAGONAL_SIZE - 1 - i].resizeAndSet(i + 1);
             }
         }
     }
     ChessPiece get(uint64_t x, uint64_t y) const {
         assert(x < SIZE && y < SIZE);
-        if (!grids[BOT][LINE][x][y]) return BOT;
-        else if (!grids[PLAYER][LINE][x][y]) return PLAYER;
+        if (!grids[BOT][C2MI(ChessboardLineType::LINE)][x][y]) return BOT;
+        else if (!grids[PLAYER][C2MI(ChessboardLineType::LINE)][x][y]) return PLAYER;
         else return EMPTY;
     }
     void set(int x, int y, ChessPiece value) {
         constexpr int ChessboardLineCount = 4;
 		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
-			ChessboardLine(LINE, x, 0), // 行
-			ChessboardLine(ROW, 0, y), // 列
-			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
-			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+			ChessboardLine(ChessboardLineType::LINE, x, 0), // 行
+			ChessboardLine(ChessboardLineType::ROW, 0, y), // 列
+			ChessboardLine(ChessboardLineType::ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(ChessboardLineType::LLURDiagonal, x, y) // 右上-左下对角线
 		};
         switch (value) {
             case EMPTY: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
-                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[EMPTY][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[BOT][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[PLAYER][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
             }
             case BOT: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
-                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[EMPTY][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
-                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[BOT][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
-                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[PLAYER][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
             }
             case PLAYER: {
                 for (int i = 0; i < ChessboardLineCount; i++) {
-                    grids[EMPTY][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[EMPTY][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
-                    grids[BOT][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[BOT][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .set(ChessboardLineArr[i].getIndex(x, y));
-                    grids[PLAYER][ChessboardLineArr[i].getType()][ChessboardLineArr[i].getUniqueID()]
+                    grids[PLAYER][C2MI(ChessboardLineArr[i].getType())][ChessboardLineArr[i].getUniqueID()]
                         .reset(ChessboardLineArr[i].getIndex(x, y));
                 }
                 break;
@@ -237,19 +237,19 @@ public:
     }
     void lambdaForTraverseChessboardLine(ChessboardLine &line, std::function<void (ChessPiece, int, int, ChessPiece, ChessPiece)> const & lambda) {
         // void lambda(ChessPiece currentPiece, int count, int position, ChessPiece leftOutOfBoundPiece, ChessPiece rightOutOfBoundPiece);
-        ChessboardLineType lineType = line.getType();
+        int lineTypedIndex = C2MI(line.getType());
         uint64_t uniqueID = line.getUniqueID();
         uint64_t bitsetSize = line.size();
-        auto &emptyGrids = grids[EMPTY][lineType][uniqueID], &botGrids = grids[BOT][lineType][uniqueID], &playerGrids = grids[PLAYER][lineType][uniqueID];
+        auto &emptyGrids = grids[EMPTY][lineTypedIndex][uniqueID], &botGrids = grids[BOT][lineTypedIndex][uniqueID], &playerGrids = grids[PLAYER][lineTypedIndex][uniqueID];
         auto getPleceInChessboardLine = [&] (int pos) {
-                if (!grids[BOT][lineType][uniqueID][pos]) return BOT;
-                else if (!grids[PLAYER][lineType][uniqueID][pos]) return PLAYER;
+                if (!grids[BOT][lineTypedIndex][uniqueID][pos]) return BOT;
+                else if (!grids[PLAYER][lineTypedIndex][uniqueID][pos]) return PLAYER;
                 else return EMPTY;
         };
         for (uint64_t i = emptyGrids.findFirstZeroAscendingNonRotate(0); i < bitsetSize; i = emptyGrids.findFirstZeroAscendingNonRotate(i)) {
             ChessPiece currentPiece = getPleceInChessboardLine(i);
             uint64_t contiguousChessCount, leftOnePosition, rightOnePosition;
-            contiguousChessCount = grids[currentPiece][lineType][uniqueID].getContiguousZeroCountNonRotate(i, &leftOnePosition, &rightOnePosition);
+            contiguousChessCount = grids[currentPiece][lineTypedIndex][uniqueID].getContiguousZeroCountNonRotate(i, &leftOnePosition, &rightOnePosition);
             ChessPiece leftOutOfBoundPiece, rightOutOfBoundPiece;
             if (leftOnePosition == bitsetSize) leftOutOfBoundPiece = NOT_EXIST;
             else leftOutOfBoundPiece = getPleceInChessboardLine(leftOnePosition);
@@ -264,9 +264,9 @@ public:
         assert(this->get(status.dropPosition.x, status.dropPosition.y) != ChessPieceAdversaryMapper[status.chessType]);
         uint64_t lineUniqueID = status.chessboardLine.getUniqueID();
         uint64_t chessIndex = status.chessboardLine.getIndex(status.dropPosition.x, status.dropPosition.y);
-        auto &emptyGrids = grids[EMPTY][status.lineType][lineUniqueID],
-            &selfGrids = grids[status.chessType][status.lineType][lineUniqueID],
-            &adversaryGrids = grids[ChessPieceAdversaryMapper[status.chessType]][status.lineType][lineUniqueID];
+        auto &emptyGrids = grids[EMPTY][C2MI(status.lineType)][lineUniqueID],
+            &selfGrids = grids[status.chessType][C2MI(status.lineType)][lineUniqueID],
+            &adversaryGrids = grids[ChessPieceAdversaryMapper[status.chessType]][C2MI(status.lineType)][lineUniqueID];
         adversaryGrids.getContiguousOneCountNonRotate(chessIndex,
             reinterpret_cast<uint64_t *>(&status.adversaryLeftAdjacentIndex),
             reinterpret_cast<uint64_t *>(&status.adversaryRightAdjacentIndex)

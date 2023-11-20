@@ -136,10 +136,10 @@ struct Gobang {
 		long long sum = 0;
 		constexpr int ChessboardLineCount = 4;
 		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
-			ChessboardLine(LINE, x, 0), // 行
-			ChessboardLine(ROW, 0, y), // 列
-			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
-			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+			ChessboardLine(ChessboardLineType::LINE, x, 0), // 行
+			ChessboardLine(ChessboardLineType::ROW, 0, y), // 列
+			ChessboardLine(ChessboardLineType::ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(ChessboardLineType::LLURDiagonal, x, y) // 右上-左下对角线
 		};
 		for (int k = 0; k < ChessboardLineCount; k++) {
 			sum += SequenceEvaluate(ChessboardLineArr[k], isFinished);
@@ -150,10 +150,10 @@ struct Gobang {
 	void invalidateUnitDiff(int x, int y) {
 		constexpr int ChessboardLineCount = 4;
 		ChessboardLine ChessboardLineArr[ChessboardLineCount] = {
-			ChessboardLine(LINE, x, 0), // 行
-			ChessboardLine(ROW, 0, y), // 列
-			ChessboardLine(ULLRDiagonal, x, y), // 左上-右下对角线
-			ChessboardLine(LLURDiagonal, x, y) // 右上-左下对角线
+			ChessboardLine(ChessboardLineType::LINE, x, 0), // 行
+			ChessboardLine(ChessboardLineType::ROW, 0, y), // 列
+			ChessboardLine(ChessboardLineType::ULLRDiagonal, x, y), // 左上-右下对角线
+			ChessboardLine(ChessboardLineType::LLURDiagonal, x, y) // 右上-左下对角线
 		};
 		for (int k = 0; k < ChessboardLineCount; k++) {
 			for (int i = 0; i < ChessboardLineArr[k].size(); i++) {
