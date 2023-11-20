@@ -2,6 +2,14 @@
 #include "forbiddenMove.h"
 
 ForbiddenChessChainType ForbiddenMoveJudger::isAnyForbiddenChessChain(SingleChessChainStatus & status) {
+    grid.getSingleChessChainStatus(status);
+    // 简单禁手
+    {
+        // 连三
+
+        // 活四
+
+    }
     return ForbiddenChessChainType::None;
 }
 
@@ -14,8 +22,11 @@ bool ForbiddenMoveJudger::isForbiddenMove(ChessPiece piece, int x, int y) {
         SingleChessChainStatus(piece, ChessPosition(x, y), LLURDiagonal)
     };
     ForbiddenChessChainType forbiddenChessChainType4DifferentDirections[ChessChainNumber];
+    assert(grid.get(x, y) == EMPTY);
+    grid.set(x, y, piece);
     for (int i = 0; i < ChessChainNumber; i++)
         forbiddenChessChainType4DifferentDirections[i] = isAnyForbiddenChessChain(multipleDirectionChessChainStatus[i]);
+    grid.set(x, y, EMPTY);
 
 #define CheckForbiddenChessChain(TYPE, COUNT, CONDITION) \
         do { \
